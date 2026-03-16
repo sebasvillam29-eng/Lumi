@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="114" fill="#7C9A7E"/>
+  <!-- Subtle blob depth layer -->
+  <ellipse cx="256" cy="272" rx="170" ry="178" fill="rgba(0,0,0,0.08)"/>
+  <!-- Lumi face circle -->
+  <ellipse cx="256" cy="256" rx="170" ry="178" fill="#6A8C6D"/>
+  <!-- Eyes — upward open arcs = happy -->
+  <path d="M182 228 Q202 206 222 228" stroke="white" stroke-width="15" fill="none" stroke-linecap="round"/>
+  <path d="M290 228 Q310 206 330 228" stroke="white" stroke-width="15" fill="none" stroke-linecap="round"/>
+  <!-- Smile -->
+  <path d="M184 302 Q256 352 328 302" stroke="white" stroke-width="15" fill="none" stroke-linecap="round"/>
+  <!-- Sparkle top-left -->
+  <line x1="118" y1="118" x2="124" y2="102" stroke="white" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+  <!-- Sparkle top-right -->
+  <line x1="394" y1="118" x2="388" y2="102" stroke="white" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+</svg>

@@ -1,0 +1,29 @@
+{
+  "name": "Lumi — Savings Goal Tracker",
+  "short_name": "Lumi",
+  "description": "Track savings goals in days. Build streaks, hit milestones, see every expense in terms of what it costs you.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FAF8F3",
+  "theme_color": "#7C9A7E",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Expense",
+      "short_name": "Add",
+      "url": "./?action=add",
+      "description": "Log a new expense"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "screenshots": []
+}

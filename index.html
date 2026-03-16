@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#FAF8F3" id="theme-meta"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon.svg"/>
+<title>Lumi — your goals, in days</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#FAF8F3;--card:#fff;--card2:#F5F2EC;
+  --border:#E8E5DF;--border2:#ECEAE4;
+  --txt:#2D2D2D;--muted:#888;--ph:#D5D2CB;
+  --green:#7C9A7E;--gtint:#EFF5EF;--gborder:#C8D9C8;--gdark:#5A8060;
+  --amber:#E8915A;--atint:#FDF4EE;--amber-mid:#C97B5A;--amber-dark:#B05040;--amber-gold:#E8C06A;
+  --div:#EDEBE5;--div2:#F5F2EC;
+}
+html.dark{
+  --bg:#1C1C1A;--card:#252522;--card2:#2E2E2B;
+  --border:#383835;--border2:#302F2C;
+  --txt:#EDE9E2;--muted:#6B6860;--ph:#4A4845;
+  --green:#8AAD8C;--gtint:rgba(138,173,140,.1);--gborder:rgba(138,173,140,.22);--gdark:#8AAD8C;
+  --amber:#E89060;--atint:rgba(232,144,90,.1);--amber-mid:#D4956A;--amber-dark:#C47050;--amber-gold:#D4A84A;
+  --div:#2A2A27;--div2:#252522;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color:var(--txt);overflow:hidden;}
+.app{width:100%;height:100vh;max-width:430px;margin:0 auto;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden;}
+.screen{display:none;flex-direction:column;height:100%;overflow:hidden;}
+.screen.active{display:flex;}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.ds{font-family:'DM Serif Display',serif;}
+
+/* Blob */
+.blob{position:relative;border-radius:60% 40% 55% 45%/45% 55% 40% 60%;animation:morph 6s ease-in-out infinite;}
+.blob.lg{width:130px;height:130px;}.blob.md{width:88px;height:88px;}.blob.sm{width:56px;height:56px;}
+.blob.green{background:var(--green);}.blob.amber{background:var(--amber);}
+.blob.celebrate{animation:morph 3s ease-in-out infinite,bob 1s ease-in-out infinite alternate;}
+@keyframes morph{0%,100%{border-radius:60% 40% 55% 45%/45% 55% 40% 60%;}33%{border-radius:40% 60% 45% 55%/55% 45% 60% 40%;}66%{border-radius:55% 45% 40% 60%/60% 40% 45% 55%;}}
+@keyframes bob{from{transform:translateY(0);}to{transform:translateY(-6px);}}
+.blob svg{position:absolute;top:0;left:0;width:100%;height:100%;}
+.dot{position:absolute;border-radius:50%;}
+
+/* Inputs */
+.mrow{display:flex;align-items:center;background:var(--card);border:2px solid var(--border);border-radius:14px;min-height:52px;transition:border-color .2s;}
+.mrow:focus-within{border-color:var(--green);}
+.msym{padding:0 2px 0 16px;font-size:20px;font-weight:800;color:var(--green);}
+.minp{flex:1;border:none;outline:none;padding:14px 14px 14px 4px;font-size:18px;font-weight:700;color:var(--txt);font-family:'Nunito',sans-serif;background:transparent;}
+.minp::placeholder{color:var(--ph);font-weight:600;}
+.tinp{display:block;width:100%;background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px 16px;font-size:16px;font-weight:600;color:var(--txt);font-family:'Nunito',sans-serif;outline:none;transition:border-color .2s;}
+.tinp:focus{border-color:var(--green);}.tinp::placeholder{color:var(--ph);}
+.flbl{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;}
+
+/* Amount input */
+.amt-row{display:flex;align-items:baseline;justify-content:center;gap:3px;padding:12px 0 6px;flex-shrink:0;}
+.amt-sym{font-family:'DM Serif Display',serif;font-size:44px;color:var(--txt);line-height:1;}
+.amt-inp{font-family:'DM Serif Display',serif;font-size:60px;color:var(--txt);background:transparent;border:none;outline:none;width:160px;max-width:260px;line-height:1;text-align:left;}
+.amt-inp::placeholder{color:var(--ph);}
+.amt-inp::-webkit-inner-spin-button,.amt-inp::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+
+/* Buttons */
+.btn{border:none;border-radius:14px;padding:15px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;text-align:center;display:block;transition:transform .1s;min-height:48px;}
+.btn:active{transform:scale(.97);}
+.btn-dk{background:var(--txt);color:var(--bg);width:100%;}
+.btn-g{background:var(--green);color:#fff;}
+.btn-a{background:var(--amber);color:#fff;}
+.btn-o{background:var(--card);color:var(--txt);border:1.5px solid var(--border);}
+.btn-danger{background:var(--card);color:#C0392B;border:1.5px solid #E8C8C8;}
+.ibtn{background:none;border:none;cursor:pointer;font-family:'Nunito',sans-serif;padding:0;}
+
+/* App components */
+.topbar{padding:18px 22px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.topbar-ico{width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:10px;border:none;background:none;}
+.card{margin:0 18px 10px;background:var(--card);border-radius:18px;border:1.5px solid var(--border);padding:15px 17px;}
+.pbar{height:5px;background:var(--div);border-radius:100px;margin:10px 0 6px;overflow:hidden;}
+.pfill{height:100%;background:var(--green);border-radius:100px;transition:width .6s ease;}
+.pbar-sm{height:3px;background:var(--div);border-radius:100px;margin:6px 0 0;overflow:hidden;}
+.lbl{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+.goal-row{margin:0 18px 7px;background:var(--card);border-radius:13px;border:1.5px solid var(--border2);padding:11px 14px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:border-color .15s;}
+.goal-row:active{border-color:var(--green);}
+.g-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background-size:cover;background-position:center;}
+.add-row{margin:0 18px 7px;border-radius:13px;border:1.5px dashed var(--border);padding:13px 14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;min-height:48px;}
+.bnav{padding:8px 18px 28px;display:flex;align-items:center;border-top:1px solid var(--border2);background:var(--bg);flex-shrink:0;}
+.nb{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:12px 0;color:var(--muted);font-family:'Nunito',sans-serif;min-height:48px;}
+.add-wrap{flex:1;display:flex;justify-content:center;}
+.add-c{width:46px;height:46px;background:var(--green);border-radius:14px;border:2px solid var(--txt);display:flex;align-items:center;justify-content:center;box-shadow:2px 2px 0 var(--txt);cursor:pointer;}
+.pills{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;}
+.pill{background:var(--bg);border:1.5px solid var(--border);border-radius:100px;padding:10px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);font-family:'Nunito',sans-serif;transition:all .15s;min-height:44px;display:flex;align-items:center;}
+.pill.on{background:var(--green);color:#fff;border-color:var(--green);}
+.dot-nav{display:flex;gap:7px;justify-content:center;}
+.dot-nav span{width:8px;height:8px;border-radius:50%;background:var(--div);transition:all .3s;}
+.dot-nav span.on{width:24px;border-radius:4px;background:var(--green);}
+.qbtn{background:var(--card);border:1.5px solid var(--border);border-radius:100px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--txt);font-family:'Nunito',sans-serif;display:flex;align-items:center;gap:5px;transition:border-color .15s;min-height:44px;}
+.qbtn.picked{background:var(--gtint);border-color:var(--green);color:var(--green);}
+.isil{width:14px;height:14px;fill:var(--green);flex-shrink:0;}
+
+/* Streak badge */
+.streak-pill{background:var(--green);border-radius:20px;padding:5px 11px;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:#fff;cursor:pointer;border:none;font-family:'Nunito',sans-serif;}
+
+/* Toast */
+.toast{position:fixed;top:24px;left:50%;transform:translateX(-50%);background:var(--txt);color:var(--bg);padding:10px 20px;border-radius:100px;font-size:13px;font-weight:700;white-space:nowrap;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;font-family:'Nunito',sans-serif;}
+.toast.show{opacity:1;}
+
+/* Celebration */
+.cel-overlay{position:fixed;inset:0;background:rgba(20,20,18,.92);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:998;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+.cel-overlay.active{display:flex;}
+.confetti-piece{position:fixed;border-radius:2px;animation:cfall linear forwards;pointer-events:none;}
+@keyframes cfall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(600deg);opacity:0;}}
+
+/* Heatmap */
+.heatmap{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;padding:0 20px 4px;}
+.hm-cell{aspect-ratio:1;border-radius:5px;background:var(--div);}
+.hm-cell.s{background:var(--green);}.hm-cell.l{background:var(--amber);}
+
+/* Shield */
+.shield-badge{display:inline-flex;align-items:center;gap:5px;background:var(--gtint);border:1px solid var(--gborder);border-radius:100px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--green);}
+.shield-empty{background:var(--card2);border-color:var(--border);color:var(--muted);}
+
+/* Lumi Score ring */
+.score-wrap{display:flex;align-items:center;gap:16px;background:var(--card);border-radius:16px;border:1.5px solid var(--border);padding:14px 16px;margin:0 18px 10px;}
+.score-ring{position:relative;width:72px;height:72px;flex-shrink:0;}
+.score-ring svg{position:absolute;inset:0;}
+.score-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+
+/* Range */
+.range-inp{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:var(--div);outline:none;cursor:pointer;}
+.range-inp::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--green);cursor:pointer;border:3px solid var(--card);box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.range-inp::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--green);cursor:pointer;border:3px solid var(--card);}
+
+/* Photo */
+.photo-btn{display:flex;align-items:center;gap:8px;background:var(--card);border:1.5px dashed var(--gborder);border-radius:12px;padding:12px 14px;cursor:pointer;width:100%;font-size:13px;font-weight:600;color:var(--green);}
+.photo-thumb{width:40px;height:40px;border-radius:8px;background-size:cover;background-position:center;flex-shrink:0;}
+.goal-photo-header{width:100%;height:130px;background-size:cover;background-position:center;flex-shrink:0;}
+
+/* History */
+.hist-date-hdr{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:14px 20px 6px;}
+.hist-row{display:flex;align-items:center;gap:12px;padding:11px 20px;border-bottom:1px solid var(--div);}
+.hist-cat-ico{width:34px;height:34px;border-radius:10px;background:var(--gtint);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hist-days-tag{font-size:10px;font-weight:800;padding:3px 8px;border-radius:100px;background:var(--atint);color:var(--amber);}
+
+/* Settings toggle */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+.sw{position:relative;width:44px;height:26px;flex-shrink:0;}
+.sw input{opacity:0;width:0;height:0;position:absolute;}
+.sw-track{position:absolute;inset:0;background:var(--border);border-radius:13px;transition:background .2s;cursor:pointer;}
+.sw input:checked + .sw-track{background:var(--green);}
+.sw-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.sw input:checked ~ .sw-thumb{transform:translateX(18px);}
+
+/* On-track badge */
+.track-ok{display:inline-flex;align-items:center;gap:4px;background:var(--gtint);border:1px solid var(--gborder);border-radius:100px;padding:4px 10px;font-size:10px;font-weight:700;color:var(--green);}
+.track-late{background:var(--atint);border-color:rgba(232,145,90,.3);color:var(--amber);}
+
+/* Divider / Info */
+.divider{height:1px;background:var(--div);margin:16px 0;}
+.info-box{background:var(--gtint);border-radius:12px;padding:12px 14px;border:1px solid var(--gborder);}
+.set-section{margin:0 18px 16px;}
+.set-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+
+/* Safe area */
+@supports(padding-top:env(safe-area-inset-top)){
+  .topbar{padding-top:calc(18px + env(safe-area-inset-top));}
+  .bnav{padding-bottom:calc(20px + env(safe-area-inset-bottom));}
+  .ob-safe{padding-top:calc(48px + env(safe-area-inset-top)) !important;}
+}
+
+/* ── Progress Cinema ─────────────────────────────────────────────────────── */
+.cinema{position:fixed;inset:0;background:rgba(10,18,12,.97);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:999;padding:24px;overflow:hidden;}
+.cinema.active{display:flex;}
+@keyframes cinemaBodyIn{from{opacity:0;transform:translateY(28px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+.cinema.active .cinema-body{animation:cinemaBodyIn .45s cubic-bezier(.16,1,.3,1) both;}
+.cinema-backdrop{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(40px);pointer-events:none;transition:opacity .3s;}
+.cinema-body{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;width:100%;max-width:360px;gap:6px;}
+.cinema-milestone{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;padding:5px 14px;font-size:12px;font-weight:800;color:#fff;display:none;margin-bottom:4px;}
+.cinema-num-wrap{display:flex;flex-direction:column;align-items:center;margin:6px 0 2px;}
+.cinema-num{font-family:'DM Serif Display',serif;font-size:80px;color:#fff;line-height:1;}
+.cinema-days-label{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-top:-2px;}
+.cinema-goal-name{font-size:14px;font-weight:600;color:rgba(255,255,255,.45);margin:6px 0 16px;}
+.cinema-prog-wrap{width:100%;max-width:260px;}
+.cinema-prog-bar{height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:8px;}
+.cinema-prog-fill{height:100%;background:var(--green);border-radius:3px;}
+.cinema-stats{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:rgba(255,255,255,.35);}
+.cinema-share{margin-top:22px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.14);border-radius:100px;padding:13px 28px;font-size:13px;font-weight:700;color:rgba(255,255,255,.85);cursor:pointer;font-family:'Nunito',sans-serif;transition:background .15s;}
+.cinema-share:active{background:rgba(255,255,255,.14);}
+.cinema-tap{position:absolute;bottom:calc(24px + env(safe-area-inset-bottom, 0px));font-size:11px;color:rgba(255,255,255,.18);font-weight:600;letter-spacing:.05em;}
+
+/* ── Install Banner ──────────────────────────────────────────────────────── */
+.install-banner{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--card);border-top:1.5px solid var(--border);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));display:flex;align-items:center;gap:10px;z-index:800;box-shadow:0 -6px 28px rgba(0,0,0,.1);}
+</style>
+</head>
+<body>
+
+<svg style="display:none">
+  <defs>
+    <symbol id="ico-plane" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></symbol>
+    <symbol id="ico-phone" viewBox="0 0 24 24"><path d="M17 2H7C5.9 2 5 2.9 5 4v16c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-5 18c-.83 0-1.5-.67-1.5-1.5S11.17 17 12 17s1.5.67 1.5 1.5S12.83 20 12 20zm5-4H7V5h10v11z"/></symbol>
+    <symbol id="ico-shield" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></symbol>
+    <symbol id="ico-laptop" viewBox="0 0 24 24"><path d="M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></symbol>
+    <symbol id="ico-car" viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.08 3.11H5.77L6.85 7zM19 17H5v-5h14v5zm-8-2.5c0 .83-.67 1.5-1.5 1.5S8 15.33 8 14.5 8.67 13 9.5 13s1.5.67 1.5 1.5zm5 0c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z"/></symbol>
+    <symbol id="ico-home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
+    <symbol id="ico-star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+    <symbol id="ico-flame" viewBox="0 0 16 20"><path d="M8 0C8 0 15 7 15 13C15 16.9 11.9 20 8 20C4.1 20 1 16.9 1 13C1 7 8 0 8 0Z"/></symbol>
+    <symbol id="ico-gear" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></symbol>
+    <symbol id="ico-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+    <symbol id="ico-camera" viewBox="0 0 24 24"><path d="M12 15.2A3.2 3.2 0 1 0 12 8.8a3.2 3.2 0 0 0 0 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></symbol>
+    <symbol id="ico-boost" viewBox="0 0 24 24"><path d="M11 15H6l7-14v8h5l-7 14v-8z"/></symbol>
+    <symbol id="ico-list" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></symbol>
+    <symbol id="ico-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+    <symbol id="ico-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+    <symbol id="ico-calendar" viewBox="0 0 24 24"><path d="M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z"/></symbol>
+  </defs>
+</svg>
+
+<div class="app" id="app">
+<div class="toast" id="toast"></div>
+
+<!-- CELEBRATION -->
+<div class="cel-overlay" id="cel-overlay" onclick="closeCelebration()">
+  <div class="ds" id="cel-title" style="font-size:52px;color:#fff;text-align:center;z-index:1;"></div>
+  <div style="font-size:14px;color:rgba(255,255,255,.6);margin-top:6px;text-align:center;z-index:1;padding:0 24px;" id="cel-sub"></div>
+  <div style="margin-top:24px;z-index:1;">
+    <div class="blob lg green celebrate">
+      <svg viewBox="0 0 130 130">
+        <path d="M40 50 Q50 38 60 50" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M70 50 Q80 38 90 50" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M42 84 Q65 100 88 84" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <line x1="25" y1="25" x2="31" y2="13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <line x1="105" y1="25" x2="99" y2="13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+  <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:28px;z-index:1;">tap to continue</div>
+</div>
+
+<!-- ══ PROGRESS CINEMA ══ -->
+<div class="cinema" id="cinema" onclick="closeCinema(event)">
+  <div class="cinema-backdrop" id="cinema-backdrop"></div>
+  <div class="cinema-body">
+    <div class="cinema-milestone" id="cinema-milestone"></div>
+    <div class="cinema-num-wrap">
+      <span class="cinema-num" id="cinema-num">+0</span>
+      <span class="cinema-days-label" id="cinema-days-label">days closer</span>
+    </div>
+    <div class="cinema-goal-name" id="cinema-goal-name"></div>
+    <div class="cinema-prog-wrap">
+      <div class="cinema-prog-bar">
+        <div class="cinema-prog-fill" id="cinema-prog-fill" style="width:0%;transition:none;"></div>
+      </div>
+      <div class="cinema-stats">
+        <span id="cinema-pct-lbl"></span>
+        <span id="cinema-rem-lbl"></span>
+      </div>
+    </div>
+    <button class="cinema-share" onclick="shareCinema(event)">share this moment ↗</button>
+  </div>
+  <div class="cinema-tap">tap anywhere to continue · esc to close</div>
+</div>
+
+<!-- ══ INSTALL BANNER ══ -->
+<div class="install-banner" id="install-banner" style="display:none;">
+  <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+    <div class="blob sm green" style="flex-shrink:0;">
+      <svg viewBox="0 0 56 56"><path d="M16 22 Q20 16 24 22" stroke="white" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M32 22 Q36 16 40 22" stroke="white" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M17 36 Q28 44 39 36" stroke="white" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>
+    </div>
+    <div style="min-width:0;">
+      <div style="font-size:13px;font-weight:800;color:var(--txt);">add lumi to home screen</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:1px;">works offline · no app store</div>
+    </div>
+  </div>
+  <button class="btn btn-g" style="padding:10px 16px;font-size:12px;width:auto;flex-shrink:0;" onclick="triggerInstall()">install</button>
+  <button class="ibtn" style="font-size:24px;color:var(--muted);padding:4px 8px;flex-shrink:0;line-height:1;" onclick="dismissInstall()">×</button>
+</div>
+
+<!-- ══ OB1 ══ -->
+<div class="screen active" id="s-ob1">
+  <div style="flex:1;display:flex;flex-direction:column;padding:0 22px 24px;overflow-y:auto;">
+    <div style="display:flex;align-items:center;gap:14px;padding:calc(22px + env(safe-area-inset-top, 0px)) 0 18px;">
+      <div class="blob md green" style="flex-shrink:0;">
+        <svg viewBox="0 0 88 88"><path d="M20 32 Q28 42 36 32" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/><path d="M52 32 Q60 42 68 32" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/><path d="M22 56 Q44 70 66 56" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <div class="ds" style="font-size:26px;line-height:1.1;">hi, i'm lumi</div>
+        <div style="font-size:10px;color:var(--green);font-weight:700;margin-top:2px;letter-spacing:.09em;">YOUR GOALS, IN DAYS</div>
+      </div>
+    </div>
+    <div class="dot-nav" style="margin-bottom:14px;"><span class="on"></span><span></span></div>
+    <div class="ds" style="font-size:22px;margin-bottom:4px;line-height:1.25;">first, tell me<br>about you</div>
+    <div style="font-size:13px;color:var(--muted);font-weight:500;margin-bottom:18px;line-height:1.5;">lumi uses this to calculate your daily savings rate and spending budget.</div>
+    <span class="flbl">your name</span>
+    <input class="tinp" id="ob-name" type="text" placeholder="Sebastian..." autocomplete="given-name" style="margin-bottom:16px;"/>
+    <span class="flbl">how much do you save per month?</span>
+    <div class="mrow" style="margin-bottom:6px;">
+      <span class="msym">$</span>
+      <input class="minp" id="ob-save" type="text" inputmode="decimal" placeholder="300" oninput="updateHint()" onkeydown="if(event.key==='Enter')ob1Next()"/>
+    </div>
+    <div id="daily-hint" style="font-size:11px;color:var(--green);font-weight:700;text-align:center;min-height:18px;margin-bottom:12px;"></div>
+    <div class="info-box" style="margin-bottom:auto;">
+      <div style="font-size:11px;color:var(--muted);line-height:1.55;">lumi sets your <strong style="color:var(--txt);">spending budget at 2×</strong> your daily savings — real-life breathing room while keeping your goal on track.</div>
+    </div>
+    <button class="btn btn-dk" onclick="ob1Next()" style="margin-top:20px;margin-bottom:10px;">next →</button>
+    <div style="text-align:center;font-size:11px;color:var(--muted);">no bank connection · stays on your device</div>
+  </div>
+</div>
+
+<!-- ══ OB2 ══ -->
+<div class="screen" id="s-ob2">
+  <div class="ob-safe" style="background:var(--green);padding:48px 22px 14px;flex-shrink:0;overflow:hidden;">
+    <button class="ibtn" onclick="go('ob1')" style="color:rgba(255,255,255,.6);font-size:12px;font-weight:700;display:flex;align-items:center;gap:4px;margin-bottom:10px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,.6)"><use href="#ico-back"/></svg> back
+    </button>
+    <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:2px;">welcome,</div>
+    <div class="ds" style="font-size:22px;color:#fff;" id="ob2-name">friend</div>
+    <div style="font-size:11px;color:rgba(255,255,255,.65);margin-top:2px;" id="ob2-rate">saving $10 / day · budget $20 / day</div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;padding:18px 22px 24px;overflow-y:auto;">
+    <div class="dot-nav" style="margin-bottom:14px;"><span></span><span class="on"></span></div>
+    <div class="ds" style="font-size:24px;margin-bottom:4px;line-height:1.25;">what are you<br>saving for?</div>
+    <div style="font-size:12px;color:var(--muted);font-weight:500;margin-bottom:14px;">lumi measures every expense against this goal.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;" id="qpick-wrap">
+      <button class="qbtn" onclick="qpick(this,'Tokyo trip','ico-plane')"><svg class="isil"><use href="#ico-plane"/></svg>Tokyo</button>
+      <button class="qbtn" onclick="qpick(this,'New iPhone','ico-phone')"><svg class="isil"><use href="#ico-phone"/></svg>iPhone</button>
+      <button class="qbtn" onclick="qpick(this,'Emergency fund','ico-shield')"><svg class="isil"><use href="#ico-shield"/></svg>Emergency</button>
+      <button class="qbtn" onclick="qpick(this,'New laptop','ico-laptop')"><svg class="isil"><use href="#ico-laptop"/></svg>Laptop</button>
+      <button class="qbtn" onclick="qpick(this,'Car','ico-car')"><svg class="isil"><use href="#ico-car"/></svg>Car</button>
+      <button class="qbtn" onclick="qpick(this,'New home','ico-home')"><svg class="isil"><use href="#ico-home"/></svg>Home</button>
+    </div>
+    <span class="flbl">or type your goal</span>
+    <input class="tinp" id="ob-gname" type="text" placeholder="My goal..." style="margin-bottom:12px;"/>
+    <span class="flbl">how much does it cost?</span>
+    <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="ob-gamt" type="text" inputmode="decimal" placeholder="2,000" oninput="calcPrev()"/></div>
+    <span class="flbl">how much have you saved already?</span>
+    <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="ob-gsaved" type="text" inputmode="decimal" placeholder="0" oninput="calcPrev()"/></div>
+    <span class="flbl">why do you want this? <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></span>
+    <input class="tinp" id="ob-greason" type="text" placeholder="e.g. to feel free, a reward for hard work..." style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')ob2Finish()"/>
+    <div id="ob-prev" style="display:none;background:var(--txt);border-radius:14px;padding:14px 16px;margin-bottom:8px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:6px;">at your savings rate</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:3px;">
+        <div class="ds" style="font-size:42px;color:var(--bg);line-height:1;" id="ob-days">–</div>
+        <div style="font-size:14px;font-weight:700;color:var(--green);">days away</div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,.3);" id="ob-explain">–</div>
+    </div>
+    <button class="btn btn-g" onclick="ob2Finish()" style="width:100%;margin-top:8px;">Start with Lumi ✦</button>
+  </div>
+</div>
+
+<!-- ══ HOME ══ -->
+<div class="screen" id="s-home">
+  <div class="topbar">
+    <button class="topbar-ico" onclick="go('settings')" aria-label="Settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:var(--txt);"><use href="#ico-gear"/></svg>
+    </button>
+    <div style="font-size:11px;font-weight:600;color:var(--muted);" id="h-greet">hey!</div>
+    <button class="streak-pill" onclick="go('streak')" id="h-streak-pill" aria-label="Streak">
+      <svg width="10" height="13" viewBox="0 0 16 20" fill="white"><use href="#ico-flame"/></svg>
+      <span id="h-streak-num">0</span>
+    </button>
+  </div>
+
+  <div id="budget-bar" style="display:none;margin:0 18px 8px;background:var(--card);border-radius:13px;border:1.5px solid var(--border);padding:10px 14px;flex-shrink:0;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+      <div class="lbl">spending budget today</div>
+      <div style="font-size:11px;font-weight:700;" id="budget-lbl">–</div>
+    </div>
+    <div class="pbar" style="margin:0;"><div class="pfill" id="budget-fill" style="width:0%;"></div></div>
+  </div>
+
+  <div id="lumi-home-wrap" style="display:flex;justify-content:center;padding:6px 0 4px;flex-shrink:0;">
+    <div style="position:relative;">
+      <div class="dot" style="width:7px;height:7px;background:var(--green);opacity:.28;top:-4px;right:14px;"></div>
+      <div class="dot" style="width:5px;height:5px;background:var(--green);opacity:.16;top:24px;right:-10px;"></div>
+      <div class="blob lg green" id="lumi-home">
+        <svg viewBox="0 0 130 130"><path d="M40 50 Q50 38 60 50" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M70 50 Q80 38 90 50" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M42 84 Q65 100 88 84" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-home" id="h-empty" style="display:none;flex-direction:column;align-items:center;text-align:center;padding:24px 28px;flex:1;justify-content:center;">
+    <div class="ds" style="font-size:22px;margin-bottom:8px;">add your first goal</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:24px;">lumi will track every day you're getting closer to what matters.</div>
+    <button class="btn btn-g" onclick="go('new-goal')" style="width:180px;">Create a goal →</button>
+  </div>
+
+  <div id="h-goals-section" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+    <div class="card" style="flex-shrink:0;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div style="flex:1;min-width:0;">
+          <div class="lbl" style="margin-bottom:3px;">main goal</div>
+          <div style="font-size:17px;font-weight:800;" id="h-gname">–</div>
+          <div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:2px;" id="h-greason"></div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:12px;">
+          <div class="ds" style="font-size:40px;line-height:1;" id="h-days">–</div>
+          <div class="lbl">days away</div>
+        </div>
+      </div>
+      <div class="pbar"><div class="pfill" id="h-pbar" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--muted);">
+        <span id="h-slbl">$0 saved</span><span id="h-glbl">$0 goal</span>
+      </div>
+      <div id="h-track-badge" style="margin-top:8px;display:none;"></div>
+    </div>
+    <div class="lbl" style="padding:2px 20px 6px;">all goals</div>
+    <div class="scroll">
+      <div id="goals-list"></div>
+      <div class="add-row" onclick="go('new-goal')">
+        <span style="font-size:16px;color:var(--muted);">+</span>
+        <span style="font-size:12px;font-weight:700;color:var(--muted);">add a goal</span>
+      </div>
+      <div style="height:8px;"></div>
+    </div>
+  </div>
+
+  <div class="bnav">
+    <button class="nb" style="color:var(--green);" onclick="go('home')" aria-current="page">
+      <svg width="17" height="16" viewBox="0 0 20 20" fill="currentColor" style="color:var(--green);"><path d="M2 9L10 2L18 9V18H13V13H7V18H2V9Z"/></svg>Home
+    </button>
+    <div class="add-wrap">
+      <div class="add-c" onclick="go('add')" role="button" aria-label="Add expense">
+        <svg width="15" height="15" viewBox="0 0 18 18"><line x1="9" y1="3" x2="9" y2="15" stroke="white" stroke-width="2.5" stroke-linecap="round"/><line x1="3" y1="9" x2="15" y2="9" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+    <button class="nb" onclick="go('streak')">
+      <svg width="13" height="16" viewBox="0 0 16 20" fill="currentColor" style="color:var(--muted);"><use href="#ico-flame"/></svg>Streak
+    </button>
+  </div>
+</div>
+
+<!-- ══ ADD EXPENSE ══ -->
+<div class="screen" id="s-add">
+  <div class="topbar" style="justify-content:center;position:relative;flex-shrink:0;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;">Add Expense</div>
+    <button class="ibtn" style="position:absolute;right:22px;bottom:8px;font-size:28px;color:var(--muted);line-height:1;" onclick="go('home')" aria-label="Close">×</button>
+  </div>
+  <div class="amt-row">
+    <span class="amt-sym">$</span>
+    <input class="amt-inp" type="text" id="exp-input" inputmode="decimal" placeholder="0"
+      oninput="onAmt(this)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Expense amount"/>
+  </div>
+  <div style="padding:0 18px 12px;flex-shrink:0;">
+    <div class="pills" id="cat-pills">
+      <div class="pill on" onclick="pickCat(this,'Food')" role="button">Food</div>
+      <div class="pill" onclick="pickCat(this,'Shopping')" role="button">Shopping</div>
+      <div class="pill" onclick="pickCat(this,'Going Out')" role="button">Going Out</div>
+      <div class="pill" onclick="pickCat(this,'Transport')" role="button">Transport</div>
+      <div class="pill" onclick="pickCat(this,'Health')" role="button">Health</div>
+      <div class="pill" onclick="pickCat(this,'Coffee')" role="button">Coffee</div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+    <div style="width:100px;height:100px;border-radius:50%;background:var(--gtint);display:flex;align-items:center;justify-content:center;transition:background .3s;" id="lumi-circle">
+      <div class="blob md green" id="lumi-exp" style="transition:background .3s;">
+        <svg viewBox="0 0 88 88" id="lumi-face">
+          <path d="M20 32 Q28 42 36 32" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+          <path d="M52 32 Q60 42 68 32" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+          <path d="M22 56 Q44 70 66 56" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+    <div id="lumi-msg" style="font-size:13px;color:var(--muted);font-weight:500;font-style:italic;text-align:center;padding:8px 26px 2px;line-height:1.55;">"enter an amount..."</div>
+    <div id="budget-hint" style="font-size:11px;color:var(--ph);text-align:center;padding:0 26px 10px;min-height:16px;"></div>
+  </div>
+  <div style="flex:1;"></div>
+  <div style="flex-shrink:0;padding:0 20px 8px;">
+    <button class="btn btn-a" id="log-btn" onclick="logExp()" style="width:100%;margin-bottom:10px;">Log Expense</button>
+    <div style="text-align:center;padding-bottom:6px;">
+      <button class="ibtn" style="font-size:12px;color:var(--green);font-weight:700;" onclick="go('home')">actually, never mind</button>
+    </div>
+  </div>
+  <div class="bnav">
+    <button class="nb" onclick="go('home')"><svg width="17" height="16" viewBox="0 0 20 20" fill="currentColor" style="color:var(--muted);"><path d="M2 9L10 2L18 9V18H13V13H7V18H2V9Z"/></svg>Home</button>
+    <div class="add-wrap"><div class="add-c" onclick="go('add')" role="button"><svg width="15" height="15" viewBox="0 0 18 18"><line x1="9" y1="3" x2="9" y2="15" stroke="white" stroke-width="2.5" stroke-linecap="round"/><line x1="3" y1="9" x2="15" y2="9" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg></div></div>
+    <button class="nb" onclick="go('streak')"><svg width="13" height="16" viewBox="0 0 16 20" fill="currentColor" style="color:var(--muted);"><use href="#ico-flame"/></svg>Streak</button>
+  </div>
+</div>
+
+<!-- ══ NEW GOAL ══ -->
+<div class="screen" id="s-new-goal">
+  <div class="topbar" style="justify-content:center;position:relative;flex-shrink:0;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;">New Goal</div>
+    <button class="ibtn" style="position:absolute;right:22px;bottom:8px;font-size:28px;color:var(--muted);line-height:1;" onclick="go('home')" aria-label="Close">×</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 20px 4px;flex-shrink:0;">
+    <div class="blob sm green" style="flex-shrink:0;">
+      <svg viewBox="0 0 56 56"><path d="M16 22 Q20 16 24 22" stroke="white" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M32 22 Q36 16 40 22" stroke="white" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M17 36 Q28 44 39 36" stroke="white" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>
+    </div>
+    <div style="font-size:13px;color:var(--muted);font-style:italic;line-height:1.5;">"what are we working towards?"</div>
+  </div>
+  <div style="padding:0 20px;flex:1;overflow-y:auto;">
+    <span class="flbl">goal name</span>
+    <input class="tinp" id="ng-name" type="text" placeholder="Vacation, new laptop..." style="margin-bottom:12px;"/>
+    <span class="flbl">target amount</span>
+    <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="ng-amt" type="text" inputmode="decimal" placeholder="1,000"/></div>
+    <span class="flbl">already saved?</span>
+    <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="ng-saved" type="text" inputmode="decimal" placeholder="0"/></div>
+    <span class="flbl">target date <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></span>
+    <input class="tinp" id="ng-deadline" type="date" style="margin-bottom:12px;color:var(--txt);"/>
+    <span class="flbl">why do you want this? <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></span>
+    <input class="tinp" id="ng-reason" type="text" placeholder="e.g. to feel free, a reward for hard work..." style="margin-bottom:12px;"/>
+    <span class="flbl">add a photo <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></span>
+    <label class="photo-btn" style="margin-bottom:20px;" id="ng-photo-btn">
+      <div class="photo-thumb" id="ng-photo-thumb" style="background:var(--gtint);display:flex;align-items:center;justify-content:center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--green)"><use href="#ico-camera"/></svg>
+      </div>
+      <span id="ng-photo-lbl">tap to choose a photo</span>
+      <input type="file" accept="image/*" id="ng-photo-file" style="display:none;" onchange="pickPhoto(this,'ng')"/>
+    </label>
+  </div>
+  <div style="flex-shrink:0;padding:0 20px 20px;">
+    <button class="btn btn-g" onclick="createGoal()" style="width:100%;">Create Goal</button>
+  </div>
+</div>
+
+<!-- ══ GOAL DETAIL ══ -->
+<div class="screen" id="s-goal-detail">
+  <div class="topbar" id="gd-topbar" style="flex-shrink:0;">
+    <button class="topbar-ico" onclick="go('home')" aria-label="Back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:var(--txt);"><use href="#ico-back"/></svg>
+    </button>
+    <div style="font-size:13px;font-weight:800;" id="gd-title">Goal</div>
+    <div style="width:36px;"></div>
+  </div>
+  <div id="gd-photo-header" style="display:none;" class="goal-photo-header"></div>
+  <div class="scroll" style="padding-bottom:20px;">
+    <div style="padding:8px 20px 0;display:flex;align-items:center;gap:14px;">
+      <div id="gd-icon-wrap" class="g-ico" style="width:48px;height:48px;border-radius:14px;background:var(--gtint);flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div class="ds" style="font-size:36px;line-height:1;" id="gd-days">–</div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);">days away</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:22px;font-weight:800;color:var(--green);" id="gd-pct">–%</div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);">saved</div>
+      </div>
+    </div>
+    <div style="padding:8px 20px;">
+      <div class="pbar"><div class="pfill" id="gd-pbar" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--muted);">
+        <span id="gd-saved-lbl">$0 saved</span><span id="gd-goal-lbl">$0 goal</span>
+      </div>
+    </div>
+    <div id="gd-track-row" style="display:none;padding:0 20px 8px;"></div>
+    <div id="gd-reason-wrap" style="display:none;padding:0 20px 8px;">
+      <div style="font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;" id="gd-reason"></div>
+    </div>
+    <div class="divider" style="margin:8px 20px;"></div>
+    <div style="padding:0 20px 4px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:14px;font-weight:800;">Add to savings</div>
+        <div style="font-size:11px;color:var(--muted);">your goal moves closer ✦</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div class="mrow" style="flex:1;"><span class="msym">$</span><input class="minp" id="boost-input" type="text" inputmode="decimal" placeholder="0"/></div>
+        <button class="btn btn-g" onclick="applyBoost()" style="width:auto;padding:0 20px;flex-shrink:0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="white" style="display:block;"><use href="#ico-boost"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="divider" style="margin:16px 20px;"></div>
+    <div style="padding:0 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="font-size:14px;font-weight:800;">what if i saved more?</div>
+        <div style="font-size:12px;font-weight:700;color:var(--green);" id="whatif-extra">current rate</div>
+      </div>
+      <input type="range" class="range-inp" id="whatif-slider" min="0" max="50" step="1" value="0" oninput="updateWhatIf()" aria-label="Extra daily savings"/>
+      <div style="display:flex;gap:10px;margin-top:14px;">
+        <div style="flex:1;background:var(--card2);border-radius:12px;padding:12px;text-align:center;">
+          <div class="ds" style="font-size:28px;color:var(--muted);line-height:1;" id="whatif-current">–</div>
+          <div style="font-size:10px;font-weight:600;color:var(--muted);margin-top:3px;">days now</div>
+        </div>
+        <div style="flex:1;background:var(--gtint);border-radius:12px;padding:12px;text-align:center;">
+          <div class="ds" style="font-size:28px;color:var(--green);line-height:1;" id="whatif-new">–</div>
+          <div style="font-size:10px;font-weight:600;color:var(--green);margin-top:3px;" id="whatif-saved-lbl">days instead</div>
+        </div>
+      </div>
+    </div>
+    <div class="divider" style="margin:16px 20px 8px;"></div>
+    <div style="padding:0 20px 20px;">
+      <button class="btn btn-danger" onclick="confirmDeleteGoal()" style="width:100%;font-size:13px;">Delete this goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HISTORY ══ -->
+<div class="screen" id="s-history">
+  <div class="topbar" style="flex-shrink:0;">
+    <button class="topbar-ico" onclick="go('streak')" aria-label="Back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:var(--txt);"><use href="#ico-back"/></svg>
+    </button>
+    <div style="font-size:13px;font-weight:800;">Expense History</div>
+    <div style="width:36px;"></div>
+  </div>
+  <div class="scroll" id="history-list">
+    <div style="padding:40px 20px;text-align:center;color:var(--muted);font-size:13px;font-weight:600;" id="history-empty">no expenses logged yet</div>
+  </div>
+</div>
+
+<!-- ══ STREAK ══ -->
+<div class="screen" id="s-streak">
+  <div class="topbar" style="flex-shrink:0;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;">Lumi</div>
+    <button class="ibtn" style="font-size:28px;color:var(--muted);line-height:1;" onclick="go('home')" aria-label="Close">×</button>
+  </div>
+  <div class="scroll">
+    <div style="text-align:center;padding:4px 0 0;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--green);">Current Streak</div>
+      <div class="ds" style="font-size:52px;line-height:1.1;" id="str-num">0 🔥</div>
+      <div style="font-size:12px;font-weight:500;color:var(--muted);margin-top:2px;" id="str-sub">log to start your streak</div>
+      <div style="margin-top:8px;" id="shield-display"></div>
+    </div>
+
+    <!-- Lumi Score -->
+    <div class="score-wrap">
+      <div class="score-ring">
+        <svg viewBox="0 0 72 72" width="72" height="72">
+          <circle cx="36" cy="36" r="30" fill="none" stroke="var(--div)" stroke-width="6"/>
+          <circle cx="36" cy="36" r="30" fill="none" stroke="var(--green)" stroke-width="6"
+            stroke-linecap="round" stroke-dasharray="188.5" id="score-arc"
+            style="stroke-dashoffset:188.5;transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset .8s ease;"/>
+        </svg>
+        <div class="score-inner">
+          <div class="ds" style="font-size:20px;line-height:1;" id="score-val">0</div>
+          <div style="font-size:8px;font-weight:700;color:var(--muted);letter-spacing:.05em;">SCORE</div>
+        </div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:800;margin-bottom:3px;">Lumi Score</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5;" id="score-desc">Log expenses daily to build your score.</div>
+        <div style="margin-top:8px;" id="score-grade"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:center;padding:8px 0 4px;">
+      <div class="blob md green celebrate">
+        <svg viewBox="0 0 88 88">
+          <path d="M20 32 Q28 42 36 32" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+          <path d="M52 32 Q60 42 68 32" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+          <path d="M22 56 Q44 70 66 56" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+          <line x1="16" y1="16" x2="20" y2="8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="72" y1="16" x2="68" y2="8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <div style="text-align:center;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-bottom:6px;">last 30 days</div>
+    <div class="heatmap" id="heatmap-grid" style="margin-bottom:10px;"></div>
+    <div style="display:flex;gap:10px;padding:0 18px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--muted);"><div style="width:10px;height:10px;border-radius:3px;background:var(--green);"></div>under budget</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--muted);"><div style="width:10px;height:10px;border-radius:3px;background:var(--amber);"></div>over budget</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--muted);"><div style="width:10px;height:10px;border-radius:3px;background:var(--div);"></div>no log</div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="lbl">weekly summary</div>
+        <div style="font-size:11px;font-weight:700;" id="wk-total">$0 spent</div>
+      </div>
+      <div id="lumi-wk-msg" style="font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;margin-bottom:10px;">"start logging to see your summary"</div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;border-radius:11px;padding:11px;text-align:center;background:var(--gtint);">
+          <div class="ds" style="font-size:24px;color:var(--green);" id="ds-n">0</div>
+          <div style="font-size:10px;font-weight:600;color:var(--muted);margin-top:1px;">days saved</div>
+        </div>
+        <div style="flex:1;border-radius:11px;padding:11px;text-align:center;background:var(--atint);">
+          <div class="ds" style="font-size:24px;color:var(--amber);" id="dl-n">0</div>
+          <div style="font-size:10px;font-weight:600;color:var(--muted);margin-top:1px;">days lost</div>
+        </div>
+        <div style="flex:1;border-radius:11px;padding:11px;text-align:center;background:var(--card2);">
+          <div class="ds" style="font-size:24px;" id="exp-count">0</div>
+          <div style="font-size:10px;font-weight:600;color:var(--muted);margin-top:1px;">expenses</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:8px 20px 4px;display:flex;gap:8px;">
+      <button class="btn btn-g" onclick="go('add')" style="flex:1;">Log an expense</button>
+      <button class="btn btn-o" onclick="shareStreak()" style="flex:1;">Share</button>
+    </div>
+    <div style="padding:0 20px 16px;">
+      <button class="btn btn-o" onclick="go('history')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color:var(--muted);"><use href="#ico-list"/></svg>
+        View all expenses
+      </button>
+    </div>
+  </div>
+  <div class="bnav">
+    <button class="nb" onclick="go('home')"><svg width="17" height="16" viewBox="0 0 20 20" fill="currentColor" style="color:var(--muted);"><path d="M2 9L10 2L18 9V18H13V13H7V18H2V9Z"/></svg>Home</button>
+    <div class="add-wrap"><div class="add-c" onclick="go('add')" role="button"><svg width="15" height="15" viewBox="0 0 18 18"><line x1="9" y1="3" x2="9" y2="15" stroke="white" stroke-width="2.5" stroke-linecap="round"/><line x1="3" y1="9" x2="15" y2="9" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg></div></div>
+    <button class="nb" style="color:var(--green);" onclick="go('streak')" aria-current="page"><svg width="13" height="16" viewBox="0 0 16 20" fill="currentColor" style="color:var(--green);"><use href="#ico-flame"/></svg>Streak</button>
+  </div>
+</div>
+
+<!-- ══ SETTINGS ══ -->
+<div class="screen" id="s-settings">
+  <div class="topbar" style="flex-shrink:0;">
+    <button class="topbar-ico" onclick="go('home')" aria-label="Back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:var(--txt);"><use href="#ico-back"/></svg>
+    </button>
+    <div style="font-size:13px;font-weight:800;">Settings</div>
+    <div style="width:36px;"></div>
+  </div>
+  <div class="scroll" style="padding-bottom:24px;">
+    <div class="set-section">
+      <div class="set-label">your profile</div>
+      <span class="flbl" style="margin-top:4px;">name</span>
+      <input class="tinp" id="set-name" type="text" placeholder="Your name" style="margin-bottom:12px;"/>
+      <span class="flbl">monthly savings</span>
+      <div class="mrow"><span class="msym">$</span><input class="minp" id="set-save" type="text" inputmode="decimal" placeholder="300"/></div>
+      <div id="set-hint" style="font-size:11px;color:var(--green);font-weight:700;text-align:center;min-height:18px;margin:6px 0 16px;"></div>
+      <button class="btn btn-g" onclick="saveSettings()" style="width:100%;">Save changes</button>
+    </div>
+    <div style="height:1px;background:var(--div);margin:8px 18px 16px;"></div>
+    <div class="set-section">
+      <div class="set-label">appearance</div>
+      <div class="toggle-row">
+        <div>
+          <div style="font-size:14px;font-weight:700;">Dark mode</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Follow system or always dark</div>
+        </div>
+        <label class="sw">
+          <input type="checkbox" id="dark-toggle" onchange="toggleDark(this.checked)"/>
+          <span class="sw-track"></span>
+          <span class="sw-thumb"></span>
+        </label>
+      </div>
+    </div>
+    <div style="height:1px;background:var(--div);margin:8px 18px 16px;"></div>
+    <div class="set-section">
+      <div class="set-label">data</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px;">Everything is stored locally on your device. Resetting will delete all goals, expenses, and streak history.</div>
+      <button class="btn btn-danger" onclick="confirmReset()" style="width:100%;">Reset all data</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function pad(n){return n<10?'0'+n:''+n;}
+function dateStr(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function getTodayStr(){return dateStr(new Date());}
+function getMondayStr(){var d=new Date();var diff=(d.getDay()+6)%7;d.setDate(d.getDate()-diff);return dateStr(d);}
+function parseAmt(id){var v=(document.getElementById(id).value||'').replace(/[^0-9.]/g,'');return parseFloat(v)||0;}
+
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+var DEFAULT_STATE={
+  name:'',goals:[],expenses:[],history:[],
+  streak:0,daysSaved:0,daysLost:0,cat:'Food',
+  dailySavings:10,dailyBudget:20,todaySpent:0,
+  lastLogDate:null,shieldsAvailable:1,lastShieldReplenish:null,
+  lastTier:'zero',activeGoalIndex:0,onboardingComplete:false,darkMode:false
+};
+var S=JSON.parse(JSON.stringify(DEFAULT_STATE));
+var currentAmt=0, pickedIcon='ico-star', pendingPhoto=null;
+
+var ICON_MAP={tokyo:'ico-plane',trip:'ico-plane',flight:'ico-plane',vacation:'ico-plane',travel:'ico-plane',iphone:'ico-phone',phone:'ico-phone',mobile:'ico-phone',laptop:'ico-laptop',macbook:'ico-laptop',computer:'ico-laptop',car:'ico-car',auto:'ico-car',emergency:'ico-shield',fund:'ico-shield',home:'ico-home',house:'ico-home',apartment:'ico-home'};
+var BGS=['#EFF5EF','#EEF0FA','#FFF8EE','#FFFBEE','#FEF0E8','#EDF5FF'];
+var CAT_EMOJI={Food:'🍔',Shopping:'🛍️','Going Out':'🎉',Transport:'🚗',Health:'💊',Coffee:'☕'};
+
+function getIcon(name){var low=(name||'').toLowerCase();for(var k in ICON_MAP){if(low.indexOf(k)>-1)return ICON_MAP[k];}return'ico-star';}
+function svgIcon(id,size,color){return'<svg width="'+(size||18)+'" height="'+(size||18)+'" viewBox="0 0 24 24" fill="'+(color||'var(--green)')+'"><use href="#'+id+'"/></svg>';}
+
+// ─── DARK MODE ────────────────────────────────────────────────────────────────
+function applyDark(on){
+  document.documentElement.classList.toggle('dark',on);
+  var meta=document.getElementById('theme-meta');
+  if(meta)meta.content=on?'#1C1C1A':'#FAF8F3';
+}
+function toggleDark(on){
+  S.darkMode=on;
+  applyDark(on);
+  saveState();
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function go(id){
+  var screen=document.getElementById('s-'+id);
+  if(!screen){console.warn('Unknown screen: s-'+id);return;}
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  screen.classList.add('active');
+  if(id==='home')renderHome();
+  if(id==='streak')renderStreak();
+  if(id==='add')initAddExpense();
+  if(id==='settings')renderSettings();
+  if(id==='history')renderHistory();
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+var toastTimer=null;
+function toast(m){
+  var t=document.getElementById('toast');
+  t.textContent=m;t.classList.add('show');
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},2600);
+}
+
+// ─── ONBOARDING 1 ─────────────────────────────────────────────────────────────
+function updateHint(){
+  var ms=parseAmt('ob-save');
+  var h=document.getElementById('daily-hint');
+  if(ms>0){var d=Math.round(ms/30*100)/100;h.textContent='= $'+d.toFixed(2)+' saved every day · budget $'+(Math.round(d*2*10)/10).toFixed(1)+'/day';}
+  else{h.textContent='';}
+}
+function ob1Next(){
+  var name=document.getElementById('ob-name').value.trim();
+  var ms=parseAmt('ob-save');
+  if(!name){toast('what\'s your name?');return;}
+  if(!ms||ms<=0){toast('how much do you save per month?');return;}
+  S.name=name;
+  S.dailySavings=Math.max(0.1,Math.round(ms/30*100)/100);
+  S.dailyBudget=Math.round(S.dailySavings*2*10)/10;
+  document.getElementById('ob2-name').textContent=name+'!';
+  document.getElementById('ob2-rate').textContent='saving $'+S.dailySavings.toFixed(2)+' / day · budget $'+S.dailyBudget.toFixed(1)+' / day';
+  go('ob2');
+}
+
+// ─── ONBOARDING 2 ─────────────────────────────────────────────────────────────
+function qpick(btn,name,iconId){
+  document.querySelectorAll('#qpick-wrap .qbtn').forEach(function(b){b.classList.remove('picked');});
+  btn.classList.add('picked');
+  document.getElementById('ob-gname').value=name;
+  pickedIcon=iconId;calcPrev();
+}
+function calcPrev(){
+  var a=parseAmt('ob-gamt');var sv=parseAmt('ob-gsaved');
+  var box=document.getElementById('ob-prev');
+  if(a>0){
+    box.style.display='block';
+    var rem=Math.max(0,a-sv);
+    var days=rem>0?Math.ceil(rem/S.dailySavings):0;
+    document.getElementById('ob-days').textContent=days;
+    document.getElementById('ob-explain').textContent='$'+Math.round(rem)+' remaining ÷ $'+S.dailySavings+'/day';
+  }else{box.style.display='none';}
+}
+function ob2Finish(){
+  var gname=document.getElementById('ob-gname').value.trim();
+  var amt=parseAmt('ob-gamt');var saved=parseAmt('ob-gsaved');
+  var reason=document.getElementById('ob-greason').value.trim();
+  if(!gname){toast('what are you saving for?');return;}
+  if(!amt||amt<=0){toast('how much does it cost?');return;}
+  if(saved>amt){toast('saved amount can\'t exceed goal amount');return;}
+  var icon=pickedIcon||getIcon(gname);
+  S.goals.push({name:gname,amount:amt,saved:Math.min(saved,amt),icon:icon,photo:pendingPhoto,reason:reason,deadline:null,celebrated:[],createdAt:getTodayStr()});
+  ['ob-gname','ob-gamt','ob-gsaved','ob-greason'].forEach(function(id){document.getElementById(id).value='';});
+  document.querySelectorAll('#qpick-wrap .qbtn').forEach(function(b){b.classList.remove('picked');});
+  document.getElementById('ob-prev').style.display='none';
+  pendingPhoto=null;pickedIcon='ico-star';
+  S.onboardingComplete=true;
+  saveState();go('home');
+}
+
+// ─── GOAL MATH ────────────────────────────────────────────────────────────────
+function daysAway(g){
+  if(!S.dailySavings||S.dailySavings<=0)return'∞';
+  var rem=Math.max(0,g.amount-g.saved);
+  return rem===0?0:Math.ceil(rem/S.dailySavings);
+}
+function pct(g){
+  if(!g.amount||g.amount<=0)return 0;
+  return Math.min(100,Math.round(g.saved/g.amount*100));
+}
+function daysToDeadline(g){
+  if(!g.deadline)return null;
+  var dl=new Date(g.deadline+'T12:00:00');
+  var today=new Date();today.setHours(12,0,0,0);
+  return Math.ceil((dl-today)/86400000);
+}
+function trackBadgeHtml(g){
+  var dtd=daysToDeadline(g);
+  if(dtd===null)return'';
+  var da=daysAway(g);
+  if(da==='∞')return'';
+  if(da===0)return'<span class="track-ok">✓ goal reached!</span>';
+  if(dtd<=0)return'<span class="track-late track-ok">deadline passed</span>';
+  var ok=da<=dtd;
+  return ok
+    ?'<span class="track-ok"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><use href="#ico-check"/></svg> on track · '+dtd+'d to deadline</span>'
+    :'<span class="track-late track-ok">'+( da-dtd)+' days behind · deadline in '+dtd+'d</span>';
+}
+
+// ─── HOME ─────────────────────────────────────────────────────────────────────
+function renderHome(){
+  var hasGoals=S.goals.length>0;
+  document.getElementById('h-empty').style.display=hasGoals?'none':'flex';
+  document.getElementById('h-goals-section').style.display=hasGoals?'flex':'none';
+  document.getElementById('budget-bar').style.display=hasGoals?'block':'none';
+  document.getElementById('lumi-home-wrap').style.display=hasGoals?'none':'flex';
+  document.getElementById('h-streak-num').textContent=S.streak;
+
+  if(!hasGoals){
+    document.getElementById('h-greet').textContent='hey, '+(S.name||'you')+'!';
+    return;
+  }
+
+  var g=S.goals[0],p=pct(g);
+  document.getElementById('h-gname').textContent=g.name;
+  document.getElementById('h-days').textContent=daysAway(g);
+  document.getElementById('h-slbl').textContent='$'+Math.round(g.saved)+' saved';
+  document.getElementById('h-glbl').textContent='$'+Math.round(g.amount)+' goal';
+  document.getElementById('h-pbar').style.width=p+'%';
+
+  var reasonEl=document.getElementById('h-greason');
+  if(g.reason){reasonEl.textContent='"'+g.reason+'"';reasonEl.style.display='block';}
+  else{reasonEl.style.display='none';}
+
+  var trackEl=document.getElementById('h-track-badge');
+  var badge=trackBadgeHtml(g);
+  if(badge){trackEl.innerHTML=badge;trackEl.style.display='block';}
+  else{trackEl.style.display='none';}
+
+  var n=S.name||'you';
+  document.getElementById('h-greet').textContent=p>70?n+', crushing it ✦':p>40?'hey '+n+', great work':'keep going, '+n;
+
+  var rem=Math.max(0,S.dailyBudget-S.todaySpent);
+  var used=S.dailyBudget>0?Math.min(100,Math.round(S.todaySpent/S.dailyBudget*100)):0;
+  var col=used>90?'var(--amber)':used>65?'#E8C06A':'var(--green)';
+  document.getElementById('budget-fill').style.width=used+'%';
+  document.getElementById('budget-fill').style.background=col;
+  document.getElementById('budget-lbl').textContent='$'+Math.round(rem)+' left today';
+  document.getElementById('budget-lbl').style.color=col;
+
+  var list=document.getElementById('goals-list');list.innerHTML='';
+  S.goals.forEach(function(goal,i){
+    var row=document.createElement('div');
+    row.className='goal-row';
+    row.setAttribute('role','button');
+    row.setAttribute('aria-label','Open '+goal.name);
+    row.onclick=(function(idx){return function(){openGoalDetail(idx);};})(i);
+    var safePhoto=goal.photo&&/^data:image\//.test(goal.photo)?goal.photo:'';
+    var icoHtml=safePhoto
+      ?'<div class="g-ico" style="background-image:url('+safePhoto+');"></div>'
+      :'<div class="g-ico" style="background:'+BGS[i%BGS.length]+'">'+svgIcon(goal.icon||getIcon(goal.name),18,'var(--green)')+'</div>';
+    row.innerHTML=icoHtml+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(goal.name)+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:2px;">$'+Math.round(goal.saved)+' of $'+Math.round(goal.amount)+'</div>'+
+        '<div class="pbar-sm"><div class="pfill" style="width:'+pct(goal)+'%;"></div></div>'+
+      '</div>'+
+      '<div style="font-size:12px;font-weight:700;color:var(--green);flex-shrink:0;">'+(function(da){return da==='∞'?'∞':da+'d';})(daysAway(goal))+'</div>';
+    list.appendChild(row);
+  });
+}
+
+// ─── ADD EXPENSE ──────────────────────────────────────────────────────────────
+function initAddExpense(){
+  currentAmt=0;S.cat='Food';S.lastTier='zero';
+  var inp=document.getElementById('exp-input');
+  inp.value='';
+  react(0);
+  document.getElementById('budget-hint').textContent='';
+  document.getElementById('log-btn').textContent='Log Expense';
+  document.querySelectorAll('#cat-pills .pill').forEach(function(p){p.classList.remove('on');});
+  var first=document.querySelector('#cat-pills .pill');
+  if(first)first.classList.add('on');
+  setTimeout(function(){inp.focus();},120);
+}
+function pickCat(el,cat){
+  document.querySelectorAll('#cat-pills .pill').forEach(function(p){p.classList.remove('on');});
+  el.classList.add('on');S.cat=cat;react(currentAmt);
+}
+function onAmt(el){
+  var v=(el.value||'').replace(/[^0-9.]/g,'');
+  var val=Math.abs(parseFloat(v)||0);
+  currentAmt=val;react(val);updateBudgetHint(val);
+}
+function updateBudgetHint(amt){
+  var hint=document.getElementById('budget-hint');
+  if(S.dailyBudget>0&&amt>0){
+    var rem=Math.max(0,S.dailyBudget-S.todaySpent-amt);
+    hint.textContent='leaves $'+Math.round(rem*100)/100+' for the rest of today';
+  }else{hint.textContent='';}
+}
+
+var MSGS={
+  zero:['"enter an amount..."'],
+  low:['"not bad. lumi approves ✓"','"small win."','"lumi nods."'],
+  mid:['"hmm. {d} days further from {g}..."','"lumi felt that."','"worth it?"'],
+  high:['"{d} days from {g}. lumi is not okay."','"your goal just moved further away."','"lumi is concerned."'],
+  huge:['"lumi has left the chat."','"...are you okay?"','"we need to talk."']
+};
+function react(amt){
+  var d=amt>0&&S.dailySavings>0?Math.ceil(amt/S.dailySavings):0;
+  var tier,col,bg,mouth;
+  if(amt<=0)    {tier='zero';col='var(--green)';bg='var(--gtint)';mouth='M22 54 Q44 68 66 54';}
+  else if(d<=1) {tier='low'; col='var(--green)';bg='var(--gtint)';mouth='M22 54 Q44 68 66 54';}
+  else if(d<=5) {tier='mid'; col='var(--amber)';    bg='var(--atint)';mouth='M22 58 Q44 48 66 58';}
+  else if(d<=14){tier='high';col='var(--amber-mid)';bg='var(--atint)';mouth='M22 60 Q44 51 66 60';}
+  else          {tier='huge';col='var(--amber-dark)';bg='var(--atint)';mouth='M22 62 Q44 54 66 62';}
+
+  var lumiEl=document.getElementById('lumi-exp');
+  var circleEl=document.getElementById('lumi-circle');
+  var faceEl=document.getElementById('lumi-face');
+  if(lumiEl)lumiEl.style.background=col;
+  if(circleEl)circleEl.style.background=bg;
+  if(faceEl)faceEl.innerHTML=
+    '<path d="M20 32 Q28 42 36 32" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/>'+
+    '<path d="M52 32 Q60 42 68 32" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/>'+
+    '<path d="'+mouth+'" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/>';
+
+  var logBtn=document.getElementById('log-btn');
+  if(logBtn){
+    if(tier==='zero'||tier==='low')logBtn.textContent='Log Expense';
+    else if(tier==='mid')logBtn.textContent='Log it anyway';
+    else if(tier==='high')logBtn.textContent='Log it — I know 😬';
+    else logBtn.textContent='Log it (lumi can\'t even)';
+  }
+  if(tier!==S.lastTier){
+    S.lastTier=tier;
+    var pool=MSGS[tier];
+    var m=pool[Math.floor(Math.random()*pool.length)];
+    if(amt>0){var gn=S.goals.length?S.goals[0].name:'your goal';m=m.replace('{d}',d).replace('{g}',gn);}
+    var msgEl=document.getElementById('lumi-msg');
+    if(msgEl)msgEl.textContent=m;
+  }
+}
+function logExp(){
+  if(currentAmt<=0){toast('enter an amount first!');return;}
+  if(!S.goals.length){toast('create a goal first!');return;}
+  var d=S.dailySavings>0?Math.ceil(currentAmt/S.dailySavings):0;
+  S.daysLost+=d;S.todaySpent+=currentAmt;
+  S.expenses.push({amt:currentAmt,cat:S.cat,date:new Date().toISOString(),localDate:getTodayStr()});
+  updateDayRecord();updateStreak();saveState();
+  toast('-'+d+' day'+(d!==1?'s':'')+' 😬');
+  go('home');
+}
+
+// ─── STREAK LOGIC ─────────────────────────────────────────────────────────────
+function replenishShield(){
+  var weekKey=getMondayStr();
+  if(S.lastShieldReplenish!==weekKey){S.shieldsAvailable=Math.min(1,S.shieldsAvailable+1);S.lastShieldReplenish=weekKey;}
+}
+function updateStreak(){
+  var today=getTodayStr();
+  if(S.lastLogDate===today)return;
+  replenishShield();
+  if(!S.lastLogDate){S.streak=1;}
+  else{
+    var lastMs=new Date(S.lastLogDate+'T12:00:00').getTime();
+    var todayMs=new Date(today+'T12:00:00').getTime();
+    var gapDays=Math.round((todayMs-lastMs)/86400000);
+    if(gapDays===1){S.streak+=1;}
+    else if(gapDays===2&&S.shieldsAvailable>0){
+      S.shieldsAvailable-=1;S.streak+=1;
+      setTimeout(function(){toast('🛡️ streak shield used! '+S.streak+' day streak 🔥');},400);
+    }else{S.streak=1;}
+  }
+  S.lastLogDate=today;
+}
+
+function updateDayRecord(){
+  var today=getTodayStr();
+  var type=S.todaySpent>S.dailyBudget?'lost':'saved';
+  S.history=S.history.filter(function(h){return h.date!==today;});
+  S.history.unshift({date:today,type:type,spent:S.todaySpent});
+  if(S.history.length>60)S.history=S.history.slice(0,60);
+}
+
+// ─── CELEBRATION (legacy overlay kept for potential reuse) ────────────────────
+function closeCelebration(){document.getElementById('cel-overlay').classList.remove('active');}
+function spawnConfetti(container){
+  var colors=['var(--green)','var(--amber)','var(--txt)','#F5C842','#6B8FD4','#E86B6B'];
+  container=container||document.getElementById('cel-overlay');
+  if(!container)return;
+  container.querySelectorAll('.confetti-piece').forEach(function(p){p.remove();});
+  for(var i=0;i<50;i++){
+    (function(){
+      var p=document.createElement('div');
+      p.className='confetti-piece';
+      p.style.left=(Math.random()*100)+'vw';p.style.top='-12px';
+      p.style.width=(Math.random()*10+6)+'px';p.style.height=(Math.random()*10+6)+'px';
+      p.style.background=colors[Math.floor(Math.random()*colors.length)];
+      p.style.borderRadius=Math.random()>.5?'50%':'2px';
+      p.style.animationDuration=(Math.random()*1.2+1.4)+'s';
+      p.style.animationDelay=(Math.random())+'s';
+      container.appendChild(p);
+      setTimeout(function(){if(p.parentNode)p.parentNode.removeChild(p);},3500);
+    })();
+  }
+}
+
+// ─── PROGRESS CINEMA ──────────────────────────────────────────────────────────
+var cinemaData={};
+function triggerCinema(daysGained,goal,prevPct,milestone){
+  var newPct=pct(goal);
+  var daysLeft=daysAway(goal);
+  cinemaData={daysGained:daysGained,goal:goal,newPct:newPct,daysLeft:daysLeft};
+  // Backdrop — goal photo blurred if available
+  var bd=document.getElementById('cinema-backdrop');
+  var sp=goal.photo&&/^data:image\//.test(goal.photo)?goal.photo:'';
+  bd.style.backgroundImage=sp?'url('+sp+')':'none';
+  bd.style.opacity=sp?'.15':'0';
+  // Milestone badge
+  var ml=document.getElementById('cinema-milestone');
+  if(milestone){
+    ml.textContent=milestone>=100?'🏆 goal reached!':milestone+'% milestone!';
+    ml.style.display='inline-block';
+  }else{ml.style.display='none';}
+  // Number and label
+  var numEl=document.getElementById('cinema-num');
+  var lblEl=document.getElementById('cinema-days-label');
+  if(daysGained>0){
+    numEl.textContent='+0';
+    lblEl.textContent=daysGained===1?'day closer':'days closer';
+  }else if(milestone){
+    numEl.textContent=milestone+'%';
+    lblEl.textContent='saved so far';
+  }else{
+    numEl.textContent='✦';
+    lblEl.textContent='progress saved';
+  }
+  // Goal name + stats
+  document.getElementById('cinema-goal-name').textContent=goal.name;
+  document.getElementById('cinema-pct-lbl').textContent=newPct+'% saved';
+  document.getElementById('cinema-rem-lbl').textContent=
+    newPct>=100?'goal complete! 🏆':(daysLeft==='∞'?'∞ days to go':daysLeft+' days to go');
+  // Progress bar: snap to prev%, then animate to new%
+  var fill=document.getElementById('cinema-prog-fill');
+  fill.style.transition='none';
+  fill.style.width=prevPct+'%';
+  // Show overlay + confetti
+  var ov=document.getElementById('cinema');
+  ov.classList.add('active');
+  spawnConfetti(ov);
+  // Count-up animation (cubic ease-out)
+  if(daysGained>0){
+    var startTs=null,dur=700,tgt=daysGained;
+    requestAnimationFrame(function tick(ts){
+      if(!startTs)startTs=ts;
+      var prog=Math.min((ts-startTs)/dur,1);
+      var eased=1-Math.pow(1-prog,3);
+      numEl.textContent='+'+Math.round(eased*tgt);
+      if(prog<1)requestAnimationFrame(tick);
+      else numEl.textContent='+'+tgt;
+    });
+  }
+  // Progress bar animate (delayed so CSS transition kicks in after repaint)
+  setTimeout(function(){
+    fill.style.transition='width 1.2s cubic-bezier(.16,1,.3,1)';
+    fill.style.width=newPct+'%';
+  },60);
+}
+function closeCinema(e){
+  if(e&&e.target&&e.target.closest&&e.target.closest('.cinema-share'))return;
+  document.getElementById('cinema').classList.remove('active');
+}
+function shareCinema(e){
+  if(e)e.stopPropagation();
+  var g=cinemaData.goal;if(!g)return;
+  var dn=cinemaData.daysGained,np=cinemaData.newPct,dl=cinemaData.daysLeft;
+  var t='';
+  if(dn>0)t='+'+dn+' day'+(dn!==1?'s':'')+' closer to '+g.name+'! ';
+  else t=g.name+': ';
+  t+=np+'% saved';
+  if(typeof dl==='number'&&dl>0)t+=', '+dl+' days to go';
+  else if(np>=100)t+=' — goal complete! 🏆';
+  t+=' · tracking with Lumi 🌱';
+  if(navigator.share){navigator.share({title:'Lumi',text:t}).catch(function(){});}
+  else if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){toast('copied!');}).catch(function(){toast('progress: '+np+'%');});}
+  else{toast('progress: '+np+'% saved!');}
+}
+// Escape key closes cinema
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    var c=document.getElementById('cinema');
+    if(c&&c.classList.contains('active'))c.classList.remove('active');
+  }
+});
+
+// ─── PWA INSTALL ──────────────────────────────────────────────────────────────
+var _installPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  _installPrompt=e;
+  if(!localStorage.getItem('lumi_installed')&&!localStorage.getItem('lumi_install_dismissed')){
+    setTimeout(showInstallBanner,1800);
+  }
+});
+window.addEventListener('appinstalled',function(){
+  localStorage.setItem('lumi_installed','1');
+  hideInstallBanner();
+  toast('lumi added to home screen 🌱');
+});
+function showInstallBanner(){
+  var b=document.getElementById('install-banner');if(b)b.style.display='flex';
+}
+function hideInstallBanner(){
+  var b=document.getElementById('install-banner');if(b)b.style.display='none';
+}
+function triggerInstall(){
+  if(!_installPrompt){
+    toast('tap Share → "Add to Home Screen"');
+    hideInstallBanner();
+    return;
+  }
+  _installPrompt.prompt();
+  _installPrompt.userChoice.then(function(r){
+    if(r.outcome==='accepted')localStorage.setItem('lumi_installed','1');
+    _installPrompt=null;
+    hideInstallBanner();
+  });
+}
+function dismissInstall(){
+  localStorage.setItem('lumi_install_dismissed','1');
+  hideInstallBanner();
+}
+
+// ─── NEW GOAL ─────────────────────────────────────────────────────────────────
+function createGoal(){
+  var n=document.getElementById('ng-name').value.trim();
+  var a=parseAmt('ng-amt');var sv=parseAmt('ng-saved');
+  var reason=document.getElementById('ng-reason').value.trim();
+  var deadline=document.getElementById('ng-deadline').value||null;
+  if(!n){toast('give your goal a name!');return;}
+  if(!a||a<=0){toast('how much does it cost?');return;}
+  if(sv>a){toast('saved amount can\'t exceed goal amount');return;}
+  S.goals.push({name:n,amount:a,saved:Math.min(sv,a),icon:getIcon(n),photo:pendingPhoto,reason:reason,deadline:deadline,celebrated:[],createdAt:getTodayStr()});
+  ['ng-name','ng-amt','ng-saved','ng-reason','ng-deadline'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('ng-photo-lbl').textContent='tap to choose a photo';
+  document.getElementById('ng-photo-thumb').style.backgroundImage='';
+  document.getElementById('ng-photo-thumb').innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="var(--green)"><use href="#ico-camera"/></svg>';
+  pendingPhoto=null;saveState();toast('goal added 🌱');go('home');
+}
+
+function pickPhoto(input,prefix){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var canvas=document.createElement('canvas');
+      var maxSide=320;var ratio=Math.min(maxSide/img.width,maxSide/img.height,1);
+      canvas.width=Math.round(img.width*ratio);canvas.height=Math.round(img.height*ratio);
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      pendingPhoto=canvas.toDataURL('image/jpeg',0.72);
+      var thumb=document.getElementById(prefix+'-photo-thumb');
+      var lbl=document.getElementById(prefix+'-photo-lbl');
+      thumb.style.backgroundImage='url('+pendingPhoto+')';thumb.innerHTML='';
+      if(lbl)lbl.textContent='photo selected ✓';
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ─── GOAL DETAIL ──────────────────────────────────────────────────────────────
+function openGoalDetail(idx){
+  S.activeGoalIndex=(typeof idx==='number')?idx:0;renderGoalDetail();go('goal-detail');
+}
+function renderGoalDetail(){
+  var g=S.goals[S.activeGoalIndex];if(!g){go('home');return;}
+  document.getElementById('gd-title').textContent=g.name;
+  var photoHeader=document.getElementById('gd-photo-header');
+  if(g.photo){photoHeader.style.display='block';photoHeader.style.backgroundImage='url('+g.photo+')';}
+  else{photoHeader.style.display='none';}
+
+  var icoWrap=document.getElementById('gd-icon-wrap');
+  icoWrap.innerHTML=svgIcon(g.icon||getIcon(g.name),24,'var(--green)');
+  icoWrap.style.background=BGS[S.activeGoalIndex%BGS.length];
+
+  document.getElementById('gd-days').textContent=daysAway(g);
+  document.getElementById('gd-pct').textContent=pct(g)+'%';
+  document.getElementById('gd-pbar').style.width=pct(g)+'%';
+  document.getElementById('gd-saved-lbl').textContent='$'+Math.round(g.saved)+' saved';
+  document.getElementById('gd-goal-lbl').textContent='$'+Math.round(g.amount)+' goal';
+
+  var trackRow=document.getElementById('gd-track-row');
+  var badge=trackBadgeHtml(g);
+  if(badge){trackRow.innerHTML=badge;trackRow.style.display='block';}
+  else{trackRow.style.display='none';}
+
+  var reasonWrap=document.getElementById('gd-reason-wrap');
+  if(g.reason){document.getElementById('gd-reason').textContent='"'+g.reason+'"';reasonWrap.style.display='block';}
+  else{reasonWrap.style.display='none';}
+
+  document.getElementById('boost-input').value='';
+  var maxSlider=Math.max(50,Math.round(S.dailySavings*5));
+  var sliderEl=document.getElementById('whatif-slider');
+  sliderEl.max=maxSlider;sliderEl.value=0;
+  document.getElementById('whatif-current').textContent=daysAway(g);
+  document.getElementById('whatif-extra').textContent='current rate';
+  document.getElementById('whatif-new').textContent=daysAway(g);
+  document.getElementById('whatif-saved-lbl').textContent='days instead';
+}
+function updateWhatIf(){
+  var g=S.goals[S.activeGoalIndex];if(!g)return;
+  var extra=parseFloat(document.getElementById('whatif-slider').value)||0;
+  document.getElementById('whatif-extra').textContent=extra>0?'+$'+extra+'/day':'current rate';
+  var newRate=S.dailySavings+extra;
+  var rem=Math.max(0,g.amount-g.saved);
+  var newDays=newRate>0?(rem>0?Math.ceil(rem/newRate):0):'∞';
+  var current=daysAway(g);
+  document.getElementById('whatif-new').textContent=newDays;
+  var savedDays=(typeof current==='number'&&typeof newDays==='number')?current-newDays:0;
+  document.getElementById('whatif-saved-lbl').textContent=savedDays>0?savedDays+' days sooner!':'days instead';
+  document.getElementById('whatif-new').style.color=savedDays>0?'var(--green)':'var(--muted)';
+}
+function applyBoost(){
+  var amt=parseAmt('boost-input');
+  if(amt<=0){toast('enter an amount to add!');return;}
+  var g=S.goals[S.activeGoalIndex];if(!g)return;
+  var prevPct=pct(g);
+  var prevDays=daysAway(g);
+  g.saved=Math.min(g.amount,g.saved+amt);
+  var newPct=pct(g);
+  var newDays=daysAway(g);
+  var daysGained=(typeof prevDays==='number'&&typeof newDays==='number')?Math.max(0,prevDays-newDays):0;
+  // Inline milestone check (replaces checkMilestones + celebrateMilestone)
+  var milestone=null;
+  [25,50,75,100].forEach(function(m){
+    if(prevPct<m&&newPct>=m){
+      if(!g.celebrated)g.celebrated=[];
+      if(g.celebrated.indexOf(m)===-1){g.celebrated.push(m);milestone=m;}
+    }
+  });
+  document.getElementById('boost-input').value='';
+  saveState();
+  renderGoalDetail();
+  if(daysGained>0||milestone){
+    triggerCinema(daysGained,g,prevPct,milestone);
+  }else{
+    toast('+$'+amt+' saved! 🌱');
+  }
+}
+var _deleteConfirmPending=false,_deleteConfirmTimer=null;
+function confirmDeleteGoal(){
+  var g=S.goals[S.activeGoalIndex];if(!g)return;
+  var btn=document.querySelector('#s-goal-detail .btn-danger');
+  if(!_deleteConfirmPending){
+    _deleteConfirmPending=true;
+    if(btn)btn.textContent='tap again to confirm delete';
+    _deleteConfirmTimer=setTimeout(function(){
+      _deleteConfirmPending=false;
+      if(btn)btn.textContent='Delete this goal';
+    },3000);
+  }else{
+    clearTimeout(_deleteConfirmTimer);_deleteConfirmPending=false;
+    if(btn)btn.textContent='Delete this goal';
+    S.goals.splice(S.activeGoalIndex,1);S.activeGoalIndex=0;saveState();toast('goal deleted');go('home');
+  }
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────────────────────
+function renderHistory(){
+  var list=document.getElementById('history-list');
+  list.innerHTML='';
+  if(!S.expenses.length){
+    list.innerHTML='<div style="padding:60px 20px;text-align:center;color:var(--muted);font-size:13px;font-weight:600;">no expenses logged yet</div>';
+    return;
+  }
+  // Group by date
+  var byDate={},order=[];
+  S.expenses.slice().reverse().forEach(function(e){
+    var d=e.localDate||(e.date?e.date.slice(0,10):getTodayStr());
+    if(!byDate[d]){byDate[d]=[];order.push(d);}
+    byDate[d].push(e);
+  });
+  // Deduplicate order
+  order=order.filter(function(d,i){return order.indexOf(d)===i;});
+  var totalAll=S.expenses.reduce(function(s,e){return s+e.amt;},0);
+
+  // Total banner
+  var banner=document.createElement('div');
+  banner.style.cssText='padding:14px 20px 10px;display:flex;justify-content:space-between;align-items:center;';
+  banner.innerHTML='<div style="font-size:12px;font-weight:700;color:var(--muted);">'+S.expenses.length+' expenses total</div><div style="font-size:13px;font-weight:800;">$'+Math.round(totalAll*100)/100+'</div>';
+  list.appendChild(banner);
+
+  order.forEach(function(d){
+    var exps=byDate[d];
+    var hdr=document.createElement('div');
+    hdr.className='hist-date-hdr';
+    // Format date nicely
+    var dt=new Date(d+'T12:00:00');
+    var today=getTodayStr();var yd=new Date();yd.setDate(yd.getDate()-1);var yesterday=dateStr(yd);
+    var label=d===today?'Today':d===yesterday?'Yesterday':dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    var dayTotal=exps.reduce(function(s,e){return s+e.amt;},0);
+    hdr.innerHTML=label+'<span style="float:right;text-transform:none;letter-spacing:0;font-weight:600;">$'+Math.round(dayTotal*100)/100+'</span>';
+    list.appendChild(hdr);
+    exps.forEach(function(e){
+      var row=document.createElement('div');
+      row.className='hist-row';
+      var emoji=CAT_EMOJI[e.cat]||'💸';
+      var d2=S.dailySavings>0?Math.ceil(e.amt/S.dailySavings):0;
+      row.innerHTML=
+        '<div class="hist-cat-ico" style="font-size:16px;">'+emoji+'</div>'+
+        '<div style="flex:1;">'+
+          '<div style="font-size:13px;font-weight:700;">'+esc(e.cat||'Other')+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);">$'+Math.round(e.amt*100)/100+'</div>'+
+        '</div>'+
+        '<div class="hist-days-tag">-'+d2+'d</div>';
+      list.appendChild(row);
+    });
+  });
+  var pad=document.createElement('div');pad.style.height='24px';list.appendChild(pad);
+}
+
+// ─── STREAK SCREEN ────────────────────────────────────────────────────────────
+function lumiScore(){
+  var days=S.history.slice(0,30);
+  if(!days.length)return 0;
+  var saved=days.filter(function(h){return h.type==='saved';}).length;
+  var base=Math.round(saved/Math.max(days.length,7)*100);
+  var bonus=Math.min(20,S.streak*2);
+  return Math.min(100,base+bonus);
+}
+function scoreGrade(s){
+  if(s>=90)return{label:'Excellent 🏆',col:'var(--green)'};
+  if(s>=75)return{label:'Great 💪',col:'var(--green)'};
+  if(s>=55)return{label:'Good 👍',col:'var(--amber-gold)'};
+  if(s>=35)return{label:'Building 🌱',col:'var(--amber)'};
+  return{label:'Getting started',col:'var(--muted)'};
+}
+
+function renderStreak(){
+  document.getElementById('str-num').textContent=S.streak+' 🔥';
+  document.getElementById('str-sub').textContent=S.streak>0?S.streak+' day streak':'log to start your streak';
+  var savedDays=S.history.filter(function(h){return h.type==='saved';}).length;
+  var lostDays=S.history.filter(function(h){return h.type==='lost';}).length;
+  document.getElementById('ds-n').textContent=savedDays;
+  document.getElementById('dl-n').textContent=lostDays;
+  document.getElementById('exp-count').textContent=S.expenses.length;
+
+  // Shield
+  var shieldEl=document.getElementById('shield-display');
+  shieldEl.innerHTML=S.shieldsAvailable>0
+    ?'<span class="shield-badge">🛡️ streak shield ready</span>'
+    :'<span class="shield-badge shield-empty">🛡️ shield recharges next week</span>';
+
+  // Lumi Score
+  var score=lumiScore();
+  var grade=scoreGrade(score);
+  var circ=188.5;
+  var arc=document.getElementById('score-arc');
+  if(arc){
+    arc.style.strokeDashoffset=circ-(circ*score/100);
+    arc.style.stroke=grade.col;
+  }
+  document.getElementById('score-val').textContent=score;
+  document.getElementById('score-desc').textContent=score===0
+    ?'Log expenses daily to build your score.'
+    :score>=75?'You\'re doing great — keep the streak alive!'
+    :'Stay under budget more days to level up.';
+  var gradeEl=document.getElementById('score-grade');
+  if(gradeEl)gradeEl.innerHTML='<span style="font-size:12px;font-weight:800;color:'+grade.col+';">'+grade.label+'</span>';
+
+  // Weekly stats
+  var now=new Date();var wkAgo=new Date(now-7*24*60*60*1000);
+  var wkE=S.expenses.filter(function(e){return new Date(e.date)>wkAgo;});
+  var wkT=wkE.reduce(function(s,e){return s+e.amt;},0);
+  document.getElementById('wk-total').textContent='$'+Math.round(wkT)+' spent';
+
+  var wm,d=S.dailySavings>0?Math.ceil(wkT/S.dailySavings):0;
+  if(!wkE.length){wm='"start logging to see your summary"';}
+  else if(wkT<S.dailySavings*2){wm='"quiet week. lumi is proud of you."';}
+  else if(d<7){wm='"not bad. lumi is cautiously optimistic."';}
+  else{wm='"$'+Math.round(wkT)+' this week — '+d+' days from '+(S.goals.length?S.goals[0].name:'your goal')+' ."';}
+  document.getElementById('lumi-wk-msg').textContent=wm;
+
+  renderHeatmap();
+}
+function renderHeatmap(){
+  var wrap=document.getElementById('heatmap-grid');wrap.innerHTML='';
+  var histMap={};S.history.forEach(function(h){histMap[h.date]=h.type;});
+  for(var i=29;i>=0;i--){
+    var d=new Date(Date.now()-i*86400000);
+    var ds=dateStr(d);
+    var cell=document.createElement('div');
+    var type=histMap[ds];
+    cell.className='hm-cell'+(type==='saved'?' s':type==='lost'?' l':'');
+    cell.title=ds;
+    wrap.appendChild(cell);
+  }
+}
+
+// ─── SHARE ────────────────────────────────────────────────────────────────────
+function shareStreak(){
+  var goalText=S.goals.length?daysAway(S.goals[0])+' days away from '+S.goals[0].name:'saving with Lumi';
+  var score=lumiScore();
+  var text='My Lumi streak: '+S.streak+' days 🔥 | Score: '+score+'/100 | '+goalText+'!';
+  if(navigator.share){
+    navigator.share({title:'Lumi',text:text}).catch(function(){});
+  }else if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(function(){toast('copied!');}).catch(function(){toast(text);});
+  }else{toast('streak: '+S.streak+' days 🔥');}
+}
+
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+function renderSettings(){
+  document.getElementById('set-name').value=S.name||'';
+  var monthly=Math.round(S.dailySavings*30*100)/100;
+  document.getElementById('set-save').value=monthly||'';
+  document.getElementById('set-hint').textContent=S.dailySavings>0?'= $'+S.dailySavings.toFixed(2)+'/day · budget $'+S.dailyBudget.toFixed(1)+'/day':'';
+  document.getElementById('set-save').oninput=function(){
+    var ms=parseFloat(this.value.replace(/[^0-9.]/g,''))||0;
+    document.getElementById('set-hint').textContent=ms>0?'= $'+(Math.round(ms/30*100)/100).toFixed(2)+'/day · budget $'+(Math.round(ms/30*2*10)/10).toFixed(1)+'/day':'';
+  };
+  document.getElementById('dark-toggle').checked=S.darkMode||false;
+}
+function saveSettings(){
+  var name=document.getElementById('set-name').value.trim();
+  var ms=parseAmt('set-save');
+  if(!name){toast('add your name!');return;}
+  if(!ms||ms<=0){toast('add your monthly savings!');return;}
+  S.name=name;
+  S.dailySavings=Math.max(0.1,Math.round(ms/30*100)/100);
+  S.dailyBudget=Math.round(S.dailySavings*2*10)/10;
+  saveState();toast('saved ✓');go('home');
+}
+var _resetConfirmPending=false,_resetConfirmTimer=null;
+function confirmReset(){
+  var btn=document.querySelector('#s-settings .btn-danger');
+  if(!_resetConfirmPending){
+    _resetConfirmPending=true;
+    if(btn)btn.textContent='tap again to reset everything';
+    _resetConfirmTimer=setTimeout(function(){
+      _resetConfirmPending=false;
+      if(btn)btn.textContent='Reset all data';
+    },3000);
+  }else{
+    clearTimeout(_resetConfirmTimer);_resetConfirmPending=false;
+    if(btn)btn.textContent='Reset all data';
+    localStorage.removeItem('lumi_state');localStorage.removeItem('lumi_last_date');
+    S=JSON.parse(JSON.stringify(DEFAULT_STATE));
+    pendingPhoto=null;pickedIcon='ico-star';currentAmt=0;
+    document.getElementById('ob-name').value='';
+    document.getElementById('ob-save').value='';
+    document.getElementById('daily-hint').textContent='';
+    applyDark(false);go('ob1');toast('data reset');
+  }
+}
+
+// ─── PERSISTENCE ──────────────────────────────────────────────────────────────
+function saveState(){
+  try{localStorage.setItem('lumi_state',JSON.stringify(S));}catch(e){console.warn('save failed',e);}
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('lumi_state');if(!raw)return false;
+    var saved=JSON.parse(raw);
+    S=Object.assign({},DEFAULT_STATE,saved);
+    if(!Array.isArray(S.goals))S.goals=[];
+    if(!Array.isArray(S.expenses))S.expenses=[];
+    if(!Array.isArray(S.history))S.history=[];
+    if(typeof S.dailySavings!=='number'||S.dailySavings<=0)S.dailySavings=10;
+    if(typeof S.dailyBudget!=='number'||S.dailyBudget<=0)S.dailyBudget=S.dailySavings*2;
+    if(typeof S.streak!=='number')S.streak=0;
+    if(typeof S.daysSaved!=='number')S.daysSaved=0;
+    if(typeof S.daysLost!=='number')S.daysLost=0;
+    if(typeof S.shieldsAvailable!=='number')S.shieldsAvailable=1;
+    if(typeof S.todaySpent!=='number')S.todaySpent=0;
+    S.goals=S.goals.map(function(g){return Object.assign({name:'',amount:0,saved:0,icon:'ico-star',photo:null,reason:'',deadline:null,celebrated:[],createdAt:getTodayStr()},g);});
+    // New day reset
+    var lastDate=localStorage.getItem('lumi_last_date');
+    var today=getTodayStr();
+    if(lastDate!==today){S.todaySpent=0;localStorage.setItem('lumi_last_date',today);replenishShield();saveState();}
+    return S.onboardingComplete;
+  }catch(e){console.warn('loadState error',e);return false;}
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+(function init(){
+  var ready=loadState();
+  applyDark(S.darkMode||false);
+  if(ready){
+    // Handle PWA shortcut: ?action=add
+    if(location.search.indexOf('action=add')>-1&&S.goals.length>0)go('add');
+    else go('home');
+  }
+  // Register service worker (https or localhost only)
+  if('serviceWorker' in navigator&&
+     (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  }
+})();
+</script>
+</body></html>
