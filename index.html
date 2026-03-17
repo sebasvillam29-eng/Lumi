@@ -350,6 +350,8 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
     <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="ob-gamt" type="text" inputmode="decimal" placeholder="2,000" oninput="calcPrev()"/></div>
     <span class="flbl">how much have you saved already?</span>
     <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="ob-gsaved" type="text" inputmode="decimal" placeholder="0" oninput="calcPrev()"/></div>
+    <span class="flbl">monthly contribution <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional — how much/month just for this?)</span></span>
+    <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="ob-gcontrib" type="text" inputmode="decimal" placeholder="leave blank to use your savings rate" oninput="calcPrev()"/></div>
     <span class="flbl">why do you want this? <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></span>
     <input class="tinp" id="ob-greason" type="text" placeholder="e.g. to feel free, a reward for hard work..." style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')ob2Finish()"/>
     <div id="ob-prev" style="display:none;background:var(--txt);border-radius:14px;padding:14px 16px;margin-bottom:8px;">
@@ -516,6 +518,8 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
     <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="ng-saved" type="text" inputmode="decimal" placeholder="0"/></div>
     <span class="flbl">target date <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></span>
     <input class="tinp" id="ng-deadline" type="date" style="margin-bottom:12px;color:var(--txt);"/>
+    <span class="flbl">monthly contribution <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional — how much/month just for this?)</span></span>
+    <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="ng-contrib" type="text" inputmode="decimal" placeholder="leave blank to use your savings rate"/></div>
     <span class="flbl">why do you want this? <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></span>
     <input class="tinp" id="ng-reason" type="text" placeholder="e.g. to feel free, a reward for hard work..." style="margin-bottom:12px;"/>
     <span class="flbl">add a photo <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></span>
@@ -733,8 +737,11 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
       <span class="flbl" style="margin-top:4px;">name</span>
       <input class="tinp" id="set-name" type="text" placeholder="Your name" style="margin-bottom:12px;"/>
       <span class="flbl">monthly savings</span>
-      <div class="mrow"><span class="msym">$</span><input class="minp" id="set-save" type="text" inputmode="decimal" placeholder="300"/></div>
-      <div id="set-hint" style="font-size:11px;color:var(--green);font-weight:700;text-align:center;min-height:18px;margin:6px 0 16px;"></div>
+      <div class="mrow" style="margin-bottom:6px;"><span class="msym">$</span><input class="minp" id="set-save" type="text" inputmode="decimal" placeholder="300" oninput="updateSetHint()"/></div>
+      <div id="set-hint" style="font-size:11px;color:var(--green);font-weight:700;text-align:center;min-height:18px;margin-bottom:12px;"></div>
+      <span class="flbl">monthly spending budget <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(what you can spend each month)</span></span>
+      <div class="mrow" style="margin-bottom:6px;"><span class="msym">$</span><input class="minp" id="set-budget" type="text" inputmode="decimal" placeholder="auto (2× savings)" oninput="updateSetHint()"/></div>
+      <div id="set-budget-hint" style="font-size:11px;color:var(--muted);font-weight:600;text-align:center;min-height:18px;margin-bottom:16px;"></div>
       <button class="btn btn-g" onclick="saveSettings()" style="width:100%;">Save changes</button>
     </div>
     <div style="height:1px;background:var(--div);margin:8px 18px 16px;"></div>
@@ -777,7 +784,7 @@ function parseAmt(id){var v=(document.getElementById(id).value||'').replace(/[^0
 var DEFAULT_STATE={
   name:'',goals:[],expenses:[],history:[],
   streak:0,daysSaved:0,daysLost:0,cat:'Food',
-  dailySavings:10,dailyBudget:20,todaySpent:0,
+  dailySavings:10,dailyBudget:20,monthlyBudget:0,todaySpent:0,
   lastLogDate:null,shieldsAvailable:1,lastShieldReplenish:null,
   lastTier:'zero',activeGoalIndex:0,onboardingComplete:false,darkMode:false
 };
@@ -840,7 +847,8 @@ function ob1Next(){
   if(!ms||ms<=0){toast('how much do you save per month?');return;}
   S.name=name;
   S.dailySavings=Math.max(0.1,Math.round(ms/30*100)/100);
-  S.dailyBudget=Math.round(S.dailySavings*2*10)/10;
+  if(!S.monthlyBudget||S.monthlyBudget<=0)S.monthlyBudget=Math.round(ms*2);
+  S.dailyBudget=Math.round(S.monthlyBudget/30*10)/10;
   document.getElementById('ob2-name').textContent=name+'!';
   document.getElementById('ob2-rate').textContent='saving $'+S.dailySavings.toFixed(2)+' / day · budget $'+S.dailyBudget.toFixed(1)+' / day';
   go('ob2');
@@ -855,25 +863,28 @@ function qpick(btn,name,iconId){
 }
 function calcPrev(){
   var a=parseAmt('ob-gamt');var sv=parseAmt('ob-gsaved');
+  var contrib=parseAmt('ob-gcontrib');
+  var rate=contrib>0?Math.round(contrib/30*100)/100:S.dailySavings;
   var box=document.getElementById('ob-prev');
   if(a>0){
     box.style.display='block';
     var rem=Math.max(0,a-sv);
-    var days=rem>0?Math.ceil(rem/S.dailySavings):0;
+    var days=rem>0&&rate>0?Math.ceil(rem/rate):0;
     document.getElementById('ob-days').textContent=days;
-    document.getElementById('ob-explain').textContent='$'+Math.round(rem)+' remaining ÷ $'+S.dailySavings+'/day';
+    document.getElementById('ob-explain').textContent='$'+Math.round(rem)+' remaining ÷ $'+rate.toFixed(2)+'/day';
   }else{box.style.display='none';}
 }
 function ob2Finish(){
   var gname=document.getElementById('ob-gname').value.trim();
   var amt=parseAmt('ob-gamt');var saved=parseAmt('ob-gsaved');
+  var contrib=parseAmt('ob-gcontrib');
   var reason=document.getElementById('ob-greason').value.trim();
   if(!gname){toast('what are you saving for?');return;}
   if(!amt||amt<=0){toast('how much does it cost?');return;}
   if(saved>amt){toast('saved amount can\'t exceed goal amount');return;}
   var icon=pickedIcon||getIcon(gname);
-  S.goals.push({name:gname,amount:amt,saved:Math.min(saved,amt),icon:icon,photo:pendingPhoto,reason:reason,deadline:null,celebrated:[],createdAt:getTodayStr()});
-  ['ob-gname','ob-gamt','ob-gsaved','ob-greason'].forEach(function(id){document.getElementById(id).value='';});
+  S.goals.push({name:gname,amount:amt,saved:Math.min(saved,amt),icon:icon,photo:pendingPhoto,reason:reason,deadline:null,celebrated:[],createdAt:getTodayStr(),monthlyContribution:contrib>0?contrib:null});
+  ['ob-gname','ob-gamt','ob-gsaved','ob-greason','ob-gcontrib'].forEach(function(id){document.getElementById(id).value='';});
   document.querySelectorAll('#qpick-wrap .qbtn').forEach(function(b){b.classList.remove('picked');});
   document.getElementById('ob-prev').style.display='none';
   pendingPhoto=null;pickedIcon='ico-star';
@@ -882,16 +893,22 @@ function ob2Finish(){
 }
 
 // ─── PACE ENGINE ──────────────────────────────────────────────────────────────
+function goalDailySavings(g){
+  if(g&&g.monthlyContribution&&g.monthlyContribution>0)
+    return Math.round(g.monthlyContribution/30*100)/100;
+  return S.dailySavings;
+}
 function paceStatus(g){
-  if(!g.createdAt||!S.dailySavings||S.dailySavings<=0)return null;
+  var rate=goalDailySavings(g);
+  if(!g.createdAt||!rate||rate<=0)return null;
   var dateOnly=g.createdAt.slice(0,10);
   var start=new Date(dateOnly+'T12:00:00');
   if(isNaN(start.getTime()))return null;
   var today=new Date();today.setHours(12,0,0,0);
   var daysElapsed=Math.max(0,Math.round((today-start)/86400000));
   if(daysElapsed===0)return null;
-  var expected=daysElapsed*S.dailySavings;
-  return Math.round((g.saved-expected)/S.dailySavings);
+  var expected=daysElapsed*rate;
+  return Math.round((g.saved-expected)/rate);
 }
 function paceBadgeHtml(g){
   var d=paceStatus(g);
@@ -903,9 +920,10 @@ function paceBadgeHtml(g){
 
 // ─── GOAL MATH ────────────────────────────────────────────────────────────────
 function daysAway(g){
-  if(!S.dailySavings||S.dailySavings<=0)return'∞';
+  var rate=goalDailySavings(g);
+  if(!rate||rate<=0)return'∞';
   var rem=Math.max(0,g.amount-g.saved);
-  return rem===0?0:Math.ceil(rem/S.dailySavings);
+  return rem===0?0:Math.ceil(rem/rate);
 }
 function pct(g){
   if(!g.amount||g.amount<=0)return 0;
@@ -1275,13 +1293,14 @@ function dismissInstall(){
 function createGoal(){
   var n=document.getElementById('ng-name').value.trim();
   var a=parseAmt('ng-amt');var sv=parseAmt('ng-saved');
+  var contrib=parseAmt('ng-contrib');
   var reason=document.getElementById('ng-reason').value.trim();
   var deadline=document.getElementById('ng-deadline').value||null;
   if(!n){toast('give your goal a name!');return;}
   if(!a||a<=0){toast('how much does it cost?');return;}
   if(sv>a){toast('saved amount can\'t exceed goal amount');return;}
-  S.goals.push({name:n,amount:a,saved:Math.min(sv,a),icon:getIcon(n),photo:pendingPhoto,reason:reason,deadline:deadline,celebrated:[],createdAt:getTodayStr()});
-  ['ng-name','ng-amt','ng-saved','ng-reason','ng-deadline'].forEach(function(id){document.getElementById(id).value='';});
+  S.goals.push({name:n,amount:a,saved:Math.min(sv,a),icon:getIcon(n),photo:pendingPhoto,reason:reason,deadline:deadline,celebrated:[],createdAt:getTodayStr(),monthlyContribution:contrib>0?contrib:null});
+  ['ng-name','ng-amt','ng-saved','ng-reason','ng-deadline','ng-contrib'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('ng-photo-lbl').textContent='tap to choose a photo';
   document.getElementById('ng-photo-thumb').style.backgroundImage='';
   document.getElementById('ng-photo-thumb').innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="var(--green)"><use href="#ico-camera"/></svg>';
@@ -1341,7 +1360,11 @@ function renderGoalDetail(){
 
   var paceRow=document.getElementById('gd-pace-row');
   var pb=paceBadgeHtml(g);
-  if(pb){paceRow.innerHTML=pb;paceRow.style.display='block';}
+  var rate=goalDailySavings(g);
+  var rateLabel=g.monthlyContribution&&g.monthlyContribution>0
+    ?'$'+g.monthlyContribution+'/mo → $'+rate.toFixed(2)+'/day toward this goal'
+    :'$'+Math.round(S.dailySavings*30)+'/mo savings rate → $'+rate.toFixed(2)+'/day';
+  if(pb){paceRow.innerHTML=pb+'<div style="font-size:10px;color:var(--muted);font-weight:600;margin-top:4px;">'+rateLabel+'</div>';paceRow.style.display='block';}
   else{paceRow.style.display='none';}
 
   var reasonWrap=document.getElementById('gd-reason-wrap');
@@ -1560,6 +1583,10 @@ function shareStreak(){
 // ─── SHARE GOAL CARD ──────────────────────────────────────────────────────────
 function shareGoalCard(){
   var g=S.goals[S.activeGoalIndex];if(!g)return;
+  toast('generating card...');
+  document.fonts.ready.then(function(){_drawShareCard(g);});
+}
+function _drawShareCard(g){
   var W=1080,H=1920;
   var canvas=document.createElement('canvas');
   canvas.width=W;canvas.height=H;
@@ -1699,21 +1726,28 @@ function renderSettings(){
   document.getElementById('set-name').value=S.name||'';
   var monthly=Math.round(S.dailySavings*30*100)/100;
   document.getElementById('set-save').value=monthly||'';
-  document.getElementById('set-hint').textContent=S.dailySavings>0?'= $'+S.dailySavings.toFixed(2)+'/day · budget $'+S.dailyBudget.toFixed(1)+'/day':'';
-  document.getElementById('set-save').oninput=function(){
-    var ms=parseFloat(this.value.replace(/[^0-9.]/g,''))||0;
-    document.getElementById('set-hint').textContent=ms>0?'= $'+(Math.round(ms/30*100)/100).toFixed(2)+'/day · budget $'+(Math.round(ms/30*2*10)/10).toFixed(1)+'/day':'';
-  };
+  document.getElementById('set-budget').value=S.monthlyBudget>0?S.monthlyBudget:'';
   document.getElementById('dark-toggle').checked=S.darkMode||false;
+  updateSetHint();
+}
+function updateSetHint(){
+  var ms=parseFloat((document.getElementById('set-save').value||'').replace(/[^0-9.]/g,''))||0;
+  var mb=parseFloat((document.getElementById('set-budget').value||'').replace(/[^0-9.]/g,''))||0;
+  var ds=ms>0?Math.round(ms/30*100)/100:0;
+  var db=mb>0?Math.round(mb/30*10)/10:(ds>0?Math.round(ds*2*10)/10:0);
+  document.getElementById('set-hint').textContent=ds>0?'= $'+ds.toFixed(2)+'/day saved':'';
+  document.getElementById('set-budget-hint').textContent=db>0?'= $'+db.toFixed(1)+'/day spending'+(mb<=0?' (auto)':''):'';
 }
 function saveSettings(){
   var name=document.getElementById('set-name').value.trim();
   var ms=parseAmt('set-save');
+  var mb=parseAmt('set-budget');
   if(!name){toast('add your name!');return;}
   if(!ms||ms<=0){toast('add your monthly savings!');return;}
   S.name=name;
   S.dailySavings=Math.max(0.1,Math.round(ms/30*100)/100);
-  S.dailyBudget=Math.round(S.dailySavings*2*10)/10;
+  S.monthlyBudget=mb>0?mb:Math.round(ms*2);
+  S.dailyBudget=Math.round(S.monthlyBudget/30*10)/10;
   saveState();toast('saved ✓');go('home');
 }
 var _resetConfirmPending=false,_resetConfirmTimer=null;
@@ -1752,7 +1786,8 @@ function loadState(){
     if(!Array.isArray(S.expenses))S.expenses=[];
     if(!Array.isArray(S.history))S.history=[];
     if(typeof S.dailySavings!=='number'||S.dailySavings<=0)S.dailySavings=10;
-    if(typeof S.dailyBudget!=='number'||S.dailyBudget<=0)S.dailyBudget=S.dailySavings*2;
+    if(typeof S.monthlyBudget!=='number'||S.monthlyBudget<=0)S.monthlyBudget=Math.round(S.dailySavings*30*2);
+    S.dailyBudget=Math.round(S.monthlyBudget/30*10)/10;
     if(typeof S.streak!=='number')S.streak=0;
     if(typeof S.daysSaved!=='number')S.daysSaved=0;
     if(typeof S.daysLost!=='number')S.daysLost=0;
