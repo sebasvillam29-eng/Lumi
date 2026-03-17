@@ -597,6 +597,12 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
       </div>
     </div>
     <div class="divider" style="margin:16px 20px 8px;"></div>
+    <div style="padding:0 20px 8px;">
+      <button class="btn btn-o" onclick="shareGoalCard()" style="width:100%;font-size:13px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        Share this goal
+      </button>
+    </div>
     <div style="padding:0 20px 20px;">
       <button class="btn btn-danger" onclick="confirmDeleteGoal()" style="width:100%;font-size:13px;">Delete this goal</button>
     </div>
@@ -1543,14 +1549,149 @@ function renderHeatmap(){
 
 // ─── SHARE ────────────────────────────────────────────────────────────────────
 function shareStreak(){
-  var goalText=S.goals.length?daysAway(S.goals[0])+' days away from '+S.goals[0].name:'saving with Lumi';
+  if(S.goals.length){S.activeGoalIndex=0;shareGoalCard();return;}
   var score=lumiScore();
-  var text='My Lumi streak: '+S.streak+' days 🔥 | Score: '+score+'/100 | '+goalText+'!';
-  if(navigator.share){
-    navigator.share({title:'Lumi',text:text}).catch(function(){});
-  }else if(navigator.clipboard){
-    navigator.clipboard.writeText(text).then(function(){toast('copied!');}).catch(function(){toast(text);});
-  }else{toast('streak: '+S.streak+' days 🔥');}
+  var text='My Lumi streak: '+S.streak+' days 🔥 | Score: '+score+'/100 | saving with Lumi 🌱';
+  if(navigator.share){navigator.share({title:'Lumi',text:text}).catch(function(){});}
+  else if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){toast('copied!');}).catch(function(){toast(text);});}
+  else{toast('streak: '+S.streak+' days 🔥');}
+}
+
+// ─── SHARE GOAL CARD ──────────────────────────────────────────────────────────
+function shareGoalCard(){
+  var g=S.goals[S.activeGoalIndex];if(!g)return;
+  var W=1080,H=1920;
+  var canvas=document.createElement('canvas');
+  canvas.width=W;canvas.height=H;
+  var ctx=canvas.getContext('2d');
+
+  var dark=document.documentElement.classList.contains('dark');
+  var bg=dark?'#1C1C1A':'#FAF8F3';
+  var card=dark?'#252522':'#fff';
+  var green=dark?'#8AAD8C':'#7C9A7E';
+  var gtint=dark?'rgba(138,173,140,.15)':'#EFF5EF';
+  var gborder=dark?'rgba(138,173,140,.25)':'#C8D9C8';
+  var txt=dark?'#EDE9E2':'#2D2D2D';
+  var muted=dark?'#6B6860':'#888';
+  var amber=dark?'#E89060':'#E8915A';
+  var atint=dark?'rgba(232,144,90,.15)':'#FDF4EE';
+
+  // Background
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Top radial glow
+  var grd=ctx.createRadialGradient(W*0.15,H*0.15,0,W*0.15,H*0.15,W*0.9);
+  grd.addColorStop(0,dark?'rgba(138,173,140,.18)':'rgba(124,154,126,.12)');
+  grd.addColorStop(1,'transparent');
+  ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+
+  // Card
+  var cx=80,cy=220,cw=W-160,ch=H-440;
+  _roundRect(ctx,cx,cy,cw,ch,56);
+  ctx.fillStyle=card;ctx.fill();
+
+  // Lumi mascot blob
+  var bx=W/2,by=cy+240;
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(bx,by,120,126,0,0,Math.PI*2);
+  ctx.fillStyle=green;ctx.fill();
+  ctx.restore();
+  // Eyes
+  ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=12;ctx.lineCap='round';
+  _arc2(ctx,bx-42,by-30,bx-22,by-50,bx-2,by-30);
+  _arc2(ctx,bx+2,by-30,bx+22,by-50,bx+42,by-30);
+  // Smile
+  _arc2(ctx,bx-46,by+18,bx,by+60,bx+46,by+18);
+
+  // Goal name
+  ctx.fillStyle=txt;ctx.textAlign='center';
+  ctx.font='700 52px Nunito,sans-serif';
+  var nameLines=_wrapText(ctx,g.name,cw-120,2);
+  nameLines.forEach(function(line,i){ctx.fillText(line,W/2,cy+430+i*66);});
+
+  // Days
+  var days=daysAway(g);
+  var daysY=cy+430+nameLines.length*66+60;
+  ctx.font='700 160px "DM Serif Display",serif';
+  ctx.fillStyle=green;
+  ctx.fillText(days,W/2,daysY);
+  ctx.font='700 38px Nunito,sans-serif';
+  ctx.fillStyle=muted;
+  ctx.fillText('days away',W/2,daysY+52);
+
+  // Progress bar
+  var pct=g.amount>0?Math.min(1,g.saved/g.amount):0;
+  var barX=cx+80,barW=cw-160,barH=20,barY=daysY+110;
+  _roundRect(ctx,barX,barY,barW,barH,10);
+  ctx.fillStyle=gtint;ctx.fill();
+  if(pct>0){
+    _roundRect(ctx,barX,barY,Math.max(barH,barW*pct),barH,10);
+    ctx.fillStyle=green;ctx.fill();
+  }
+  ctx.font='700 34px Nunito,sans-serif';ctx.fillStyle=muted;
+  ctx.fillText(Math.round(pct*100)+'% saved · $'+g.saved.toLocaleString()+' of $'+g.amount.toLocaleString(),W/2,barY+66);
+
+  // Pace badge
+  var pace=paceStatus(g);
+  if(pace!==null){
+    var pLabel,pBg,pColor;
+    if(pace>0){pLabel='↑ '+pace+' day'+(pace!==1?'s':'')+' ahead of pace';pBg=gtint;pColor=green;}
+    else if(pace<0){pLabel='↓ '+Math.abs(pace)+' day'+(Math.abs(pace)!==1?'s':'')+' behind pace';pBg=atint;pColor=amber;}
+    else{pLabel='✓ right on pace';pBg=dark?'#2E2E2B':'#F5F2EC';pColor=muted;}
+    ctx.font='800 30px Nunito,sans-serif';
+    var pw=ctx.measureText(pLabel).width+80;
+    var pBadgeX=W/2-pw/2,pBadgeY=barY+110;
+    _roundRect(ctx,pBadgeX,pBadgeY,pw,56,28);
+    ctx.fillStyle=pBg;ctx.fill();
+    ctx.fillStyle=pColor;ctx.textAlign='center';
+    ctx.fillText(pLabel,W/2,pBadgeY+38);
+  }
+
+  // Streak row
+  var streakY=H-380;
+  ctx.font='700 34px Nunito,sans-serif';ctx.fillStyle=muted;ctx.textAlign='center';
+  ctx.fillText(S.streak+' day streak 🔥',W/2,streakY);
+
+  // Branding footer
+  ctx.font='800 32px Nunito,sans-serif';ctx.fillStyle=green;
+  ctx.fillText('lumi-app-eta.vercel.app',W/2,H-200);
+  ctx.font='600 26px Nunito,sans-serif';ctx.fillStyle=muted;
+  ctx.fillText('track goals in days, not dollars',W/2,H-158);
+
+  canvas.toBlob(function(blob){
+    if(!blob)return;
+    var file=new File([blob],'lumi-goal.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:g.name+' — '+days+' days away',text:'Saving for '+g.name+' with Lumi 🌱'}).catch(function(){});
+    }else if(navigator.share){
+      navigator.share({title:g.name,text:g.name+' — '+days+' days away. Saving with Lumi 🌱'}).catch(function(){});
+    }else{
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');a.href=url;a.download='lumi-goal.png';a.click();
+      setTimeout(function(){URL.revokeObjectURL(url);},5000);
+      toast('card saved!');
+    }
+  },'image/png');
+}
+function _roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+function _arc2(ctx,x1,y1,cx,cy,x2,y2){
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.quadraticCurveTo(cx,cy,x2,y2);ctx.stroke();
+}
+function _wrapText(ctx,text,maxW,maxLines){
+  var words=text.split(' ');var lines=[];var cur='';
+  for(var i=0;i<words.length;i++){
+    var test=cur?(cur+' '+words[i]):words[i];
+    if(ctx.measureText(test).width>maxW&&cur){lines.push(cur);cur=words[i];}
+    else{cur=test;}
+  }
+  if(cur)lines.push(cur);
+  return lines.slice(0,maxLines);
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
