@@ -878,7 +878,9 @@ function ob2Finish(){
 // ─── PACE ENGINE ──────────────────────────────────────────────────────────────
 function paceStatus(g){
   if(!g.createdAt||!S.dailySavings||S.dailySavings<=0)return null;
-  var start=new Date(g.createdAt+'T12:00:00');
+  var dateOnly=g.createdAt.slice(0,10);
+  var start=new Date(dateOnly+'T12:00:00');
+  if(isNaN(start.getTime()))return null;
   var today=new Date();today.setHours(12,0,0,0);
   var daysElapsed=Math.max(0,Math.round((today-start)/86400000));
   if(daysElapsed===0)return null;
@@ -1303,7 +1305,7 @@ function pickPhoto(input,prefix){
 
 // ─── GOAL DETAIL ──────────────────────────────────────────────────────────────
 function openGoalDetail(idx){
-  S.activeGoalIndex=(typeof idx==='number')?idx:0;renderGoalDetail();go('goal-detail');
+  S.activeGoalIndex=(typeof idx==='number')?idx:0;go('goal-detail');
 }
 function renderGoalDetail(){
   if(_deleteConfirmTimer)clearTimeout(_deleteConfirmTimer);
@@ -1615,7 +1617,7 @@ function loadState(){
     if(typeof S.daysLost!=='number')S.daysLost=0;
     if(typeof S.shieldsAvailable!=='number')S.shieldsAvailable=1;
     if(typeof S.todaySpent!=='number')S.todaySpent=0;
-    S.goals=S.goals.map(function(g){var m=Object.assign({name:'',amount:0,saved:0,icon:'ico-star',photo:null,reason:'',deadline:null,celebrated:[],createdAt:getTodayStr()},g);if(!Array.isArray(m.celebrated))m.celebrated=[];return m;});
+    S.goals=S.goals.map(function(g){var m=Object.assign({name:'',amount:0,saved:0,icon:'ico-star',photo:null,reason:'',deadline:null,celebrated:[]},g);if(!Array.isArray(m.celebrated))m.celebrated=[];return m;});
     // New day reset
     var lastDate=localStorage.getItem('lumi_last_date');
     var today=getTodayStr();
@@ -1637,7 +1639,7 @@ function loadState(){
   setInterval(function(){
     var today=getTodayStr();
     var lastDate=localStorage.getItem('lumi_last_date');
-    if(lastDate&&lastDate!==today){
+    if(!lastDate||lastDate!==today){
       S.todaySpent=0;replenishShield();
       if(saveState())localStorage.setItem('lumi_last_date',today);
       var h=document.getElementById('s-home');
