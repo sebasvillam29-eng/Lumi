@@ -177,6 +177,18 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
 .pace-behind{background:var(--atint);color:var(--amber);border:1px solid rgba(232,145,90,.3);}
 .pace-on{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
 
+/* Days cost display on add-expense */
+.days-cost-wrap{text-align:center;padding:8px 0 4px;flex-shrink:0;}
+.days-cost-num{font-family:'DM Serif Display',serif;font-size:54px;line-height:1;transition:color .2s;}
+
+/* Category breakdown bars */
+.cat-bar-row{margin-bottom:9px;}
+.cat-bar-track{height:6px;background:var(--card2);border-radius:3px;overflow:hidden;margin-top:3px;}
+.cat-bar-fill{height:100%;border-radius:3px;transition:width .6s ease;}
+
+/* Budget bar upgrade */
+.budget-bar-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+
 /* Safe area */
 @supports(padding-top:env(safe-area-inset-top)){
   .topbar{padding-top:calc(18px + env(safe-area-inset-top));}
@@ -232,7 +244,7 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
 </svg>
 
 <div class="app" id="app">
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <!-- CELEBRATION -->
 <div class="cel-overlay" id="cel-overlay" onclick="closeCelebration()">
@@ -380,9 +392,12 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
   </div>
 
   <div id="budget-bar" style="display:none;margin:0 18px 8px;background:var(--card);border-radius:13px;border:1.5px solid var(--border);padding:10px 14px;flex-shrink:0;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-      <div class="lbl">spending budget today</div>
-      <div style="font-size:11px;font-weight:700;" id="budget-lbl">–</div>
+    <div class="budget-bar-row">
+      <div class="lbl">today's budget</div>
+      <div style="display:flex;align-items:baseline;gap:5px;">
+        <div style="font-size:11px;font-weight:700;" id="budget-lbl">–</div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);" id="budget-days-lbl"></div>
+      </div>
     </div>
     <div class="pbar" style="margin:0;"><div class="pfill" id="budget-fill" style="width:0%;"></div></div>
   </div>
@@ -470,8 +485,17 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
       <div class="pill" onclick="pickCat(this,'Coffee')" role="button">Coffee</div>
     </div>
   </div>
+  <div class="days-cost-wrap" id="days-cost-wrap" style="display:none;">
+    <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:1px;">this costs you</div>
+    <div style="display:flex;align-items:baseline;justify-content:center;gap:5px;">
+      <span class="days-cost-num" id="days-cost-num">0</span>
+      <span style="font-size:16px;font-weight:800;color:var(--muted);">days</span>
+    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--muted);margin-top:1px;">toward <span id="days-cost-goal">your goal</span></div>
+  </div>
+
   <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
-    <div style="width:100px;height:100px;border-radius:50%;background:var(--gtint);display:flex;align-items:center;justify-content:center;transition:background .3s;" id="lumi-circle">
+    <div style="width:90px;height:90px;border-radius:50%;background:var(--gtint);display:flex;align-items:center;justify-content:center;transition:background .3s;" id="lumi-circle">
       <div class="blob md green" id="lumi-exp" style="transition:background .3s;">
         <svg viewBox="0 0 88 88" id="lumi-face">
           <path d="M20 32 Q28 42 36 32" stroke="white" stroke-width="2.8" fill="none" stroke-linecap="round"/>
@@ -682,6 +706,14 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
       <div style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--muted);"><div style="width:10px;height:10px;border-radius:3px;background:var(--div);"></div>no log</div>
     </div>
 
+    <div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="lbl">where your days went · 30d</div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);" id="cat-breakdown-total"></div>
+      </div>
+      <div id="cat-breakdown"></div>
+    </div>
+
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div class="lbl">weekly summary</div>
@@ -837,8 +869,11 @@ function toast(m){
 function updateHint(){
   var ms=parseAmt('ob-save');
   var h=document.getElementById('daily-hint');
-  if(ms>0){var d=Math.round(ms/30*100)/100;h.textContent='= $'+d.toFixed(2)+' saved every day · budget $'+(Math.round(d*2*10)/10).toFixed(1)+'/day';}
-  else{h.textContent='';}
+  if(ms>0){
+    var d=Math.round(ms/30*100)/100;
+    var eg=d>0?Math.ceil(50/d):0;
+    h.innerHTML='= $'+d.toFixed(2)+'/day saved'+(eg>0?' · <strong>a $50 dinner = '+eg+' days</strong>':'');
+  }else{h.textContent='';}
 }
 function ob1Next(){
   var name=document.getElementById('ob-name').value.trim();
@@ -941,11 +976,11 @@ function trackBadgeHtml(g){
   var da=daysAway(g);
   if(da==='∞')return'';
   if(da===0)return'<span class="track-ok">✓ goal reached!</span>';
-  if(dtd<=0)return'<span class="track-late track-ok">deadline passed</span>';
+  if(dtd<=0)return'<span class="track-late">deadline passed</span>';
   var ok=da<=dtd;
   return ok
     ?'<span class="track-ok"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><use href="#ico-check"/></svg> on track · '+dtd+'d to deadline</span>'
-    :'<span class="track-late track-ok">'+( da-dtd)+' days behind · deadline in '+dtd+'d</span>';
+    :'<span class="track-late">'+(da-dtd)+' days behind · deadline in '+dtd+'d</span>';
 }
 
 // ─── HOME ─────────────────────────────────────────────────────────────────────
@@ -990,13 +1025,18 @@ function renderHome(){
   else if(pace!==null&&pace<-2)greet='let\'s catch up, '+n;
   document.getElementById('h-greet').textContent=greet;
 
-  var rem=Math.max(0,S.dailyBudget-S.todaySpent);
+  var rem=S.dailyBudget>0?Math.max(0,S.dailyBudget-S.todaySpent):0;
+  var over=S.dailyBudget>0&&S.todaySpent>S.dailyBudget;
   var used=S.dailyBudget>0?Math.min(100,Math.round(S.todaySpent/S.dailyBudget*100)):0;
-  var col=used>90?'var(--amber)':used>65?'#E8C06A':'var(--green)';
+  var col=over?'var(--amber)':used>65?'#E8C06A':'var(--green)';
   document.getElementById('budget-fill').style.width=used+'%';
   document.getElementById('budget-fill').style.background=col;
-  document.getElementById('budget-lbl').textContent='$'+Math.round(rem)+' left today';
+  document.getElementById('budget-lbl').textContent=over?'$'+Math.round(S.todaySpent-S.dailyBudget)+' over':'$'+Math.round(rem)+' left';
   document.getElementById('budget-lbl').style.color=col;
+  var rate0=goalDailySavings(g);
+  var daysSpentToday=rate0>0&&S.todaySpent>0?Math.round(S.todaySpent/rate0*10)/10:0;
+  var daysEl=document.getElementById('budget-days-lbl');
+  if(daysEl)daysEl.textContent=daysSpentToday>0?'· '+daysSpentToday+'d spent':'';
 
   var list=document.getElementById('goals-list');list.innerHTML='';
   S.goals.forEach(function(goal,i){
@@ -1064,13 +1104,27 @@ var MSGS={
   huge:['"lumi has left the chat."','"...are you okay?"','"we need to talk."']
 };
 function react(amt){
-  var d=amt>0&&S.dailySavings>0?Math.ceil(amt/S.dailySavings):0;
+  var rate=S.goals.length?goalDailySavings(S.goals[0]):S.dailySavings;
+  var d=amt>0&&rate>0?Math.ceil(amt/rate):0;
   var tier,col,bg,mouth;
   if(amt<=0)    {tier='zero';col='var(--green)';bg='var(--gtint)';mouth='M22 54 Q44 68 66 54';}
   else if(d<=1) {tier='low'; col='var(--green)';bg='var(--gtint)';mouth='M22 54 Q44 68 66 54';}
   else if(d<=5) {tier='mid'; col='var(--amber)';    bg='var(--atint)';mouth='M22 58 Q44 48 66 58';}
   else if(d<=14){tier='high';col='var(--amber-mid)';bg='var(--atint)';mouth='M22 60 Q44 51 66 60';}
   else          {tier='huge';col='var(--amber-dark)';bg='var(--atint)';mouth='M22 62 Q44 54 66 62';}
+
+  // Big days-cost display
+  var dcWrap=document.getElementById('days-cost-wrap');
+  var dcNum=document.getElementById('days-cost-num');
+  var dcGoal=document.getElementById('days-cost-goal');
+  if(dcWrap){
+    if(amt>0&&d>0){
+      dcWrap.style.display='block';
+      dcNum.textContent=d;
+      dcNum.style.color=d<=2?'var(--green)':d<=7?'var(--amber)':'var(--amber-dark)';
+      if(dcGoal)dcGoal.textContent=S.goals.length?S.goals[0].name:'your goal';
+    }else{dcWrap.style.display='none';}
+  }
 
   var lumiEl=document.getElementById('lumi-exp');
   var circleEl=document.getElementById('lumi-circle');
@@ -1101,11 +1155,13 @@ function react(amt){
 function logExp(){
   if(currentAmt<=0){toast('enter an amount first!');return;}
   if(!S.goals.length){toast('create a goal first!');return;}
-  var d=S.dailySavings>0?Math.ceil(currentAmt/S.dailySavings):0;
+  var rate=goalDailySavings(S.goals[0]);
+  var d=rate>0?Math.ceil(currentAmt/rate):0;
   S.todaySpent+=currentAmt;
   S.expenses.push({amt:currentAmt,cat:S.cat,date:new Date().toISOString(),localDate:getTodayStr()});
   updateDayRecord();updateStreak();saveState();
-  toast('-'+d+' day'+(d!==1?'s':'')+' 😬');
+  var emoji=CAT_EMOJI[S.cat]||'💸';
+  toast(d>0?emoji+' $'+Math.round(currentAmt*100)/100+' = '+d+' day'+(d!==1?'s':''):'logged ✓');
   go('home');
 }
 
@@ -1147,11 +1203,12 @@ function spawnConfetti(container){
   container=container||document.getElementById('cel-overlay');
   if(!container)return;
   container.querySelectorAll('.confetti-piece').forEach(function(p){p.remove();});
+  var appW=(document.getElementById('app')||container).offsetWidth||360;
   for(var i=0;i<50;i++){
     (function(){
       var p=document.createElement('div');
       p.className='confetti-piece';
-      p.style.left=(Math.random()*100)+'vw';p.style.top='-12px';
+      p.style.left=(Math.random()*appW)+'px';p.style.top='-12px';
       p.style.width=(Math.random()*10+6)+'px';p.style.height=(Math.random()*10+6)+'px';
       p.style.background=colors[Math.floor(Math.random()*colors.length)];
       p.style.borderRadius=Math.random()>.5?'50%':'2px';
@@ -1458,9 +1515,15 @@ function renderHistory(){
   var totalAll=S.expenses.reduce(function(s,e){return s+e.amt;},0);
 
   // Total banner
+  var histRate=S.goals.length?goalDailySavings(S.goals[0]):S.dailySavings;
+  var totalDaysAll=histRate>0?Math.round(totalAll/histRate*10)/10:0;
   var banner=document.createElement('div');
   banner.style.cssText='padding:14px 20px 10px;display:flex;justify-content:space-between;align-items:center;';
-  banner.innerHTML='<div style="font-size:12px;font-weight:700;color:var(--muted);">'+S.expenses.length+' expenses total</div><div style="font-size:13px;font-weight:800;">$'+Math.round(totalAll*100)/100+'</div>';
+  banner.innerHTML='<div style="font-size:12px;font-weight:700;color:var(--muted);">'+S.expenses.length+' expenses</div>'+
+    '<div style="text-align:right;">'+
+      '<div style="font-size:13px;font-weight:800;">$'+Math.round(totalAll*100)/100+'</div>'+
+      (totalDaysAll>0?'<div style="font-size:11px;font-weight:700;color:var(--amber);">= '+totalDaysAll+' days</div>':'')+
+    '</div>';
   list.appendChild(banner);
 
   order.forEach(function(d){
@@ -1478,14 +1541,15 @@ function renderHistory(){
       var row=document.createElement('div');
       row.className='hist-row';
       var emoji=CAT_EMOJI[e.cat]||'💸';
-      var d2=S.dailySavings>0?Math.ceil(e.amt/S.dailySavings):0;
+      var rowRate=S.goals.length?goalDailySavings(S.goals[0]):S.dailySavings;
+      var d2=rowRate>0?Math.ceil(e.amt/rowRate):0;
       row.innerHTML=
         '<div class="hist-cat-ico" style="font-size:16px;">'+emoji+'</div>'+
         '<div style="flex:1;">'+
           '<div style="font-size:13px;font-weight:700;">'+esc(e.cat||'Other')+'</div>'+
           '<div style="font-size:11px;color:var(--muted);">$'+Math.round(e.amt*100)/100+'</div>'+
         '</div>'+
-        '<div class="hist-days-tag">-'+d2+'d</div>';
+        (d2>0?'<div class="hist-days-tag">'+d2+'d</div>':'');
       list.appendChild(row);
     });
   });
@@ -1547,14 +1611,16 @@ function renderStreak(){
   var wkT=wkE.reduce(function(s,e){return s+e.amt;},0);
   document.getElementById('wk-total').textContent='$'+Math.round(wkT)+' spent';
 
-  var wm,d=S.dailySavings>0?Math.ceil(wkT/S.dailySavings):0;
-  if(!wkE.length){wm='"start logging to see your summary"';}
-  else if(wkT<S.dailySavings*2){wm='"quiet week. lumi is proud of you."';}
+  var rate1=S.goals.length?goalDailySavings(S.goals[0]):S.dailySavings;
+  var wm,d=rate1>0?Math.ceil(wkT/rate1):0;
+  if(!wkE.length){wm='"start logging to see your weekly summary"';}
+  else if(d<=2){wm='"quiet week. lumi is proud of you 🌱"';}
   else if(d<7){wm='"not bad. lumi is cautiously optimistic."';}
-  else{wm='"$'+Math.round(wkT)+' this week — '+d+' days from '+(S.goals.length?S.goals[0].name:'your goal')+'."';}
+  else{wm='"$'+Math.round(wkT)+' this week — thats '+d+' days from '+(S.goals.length?S.goals[0].name:'your goal')+'."';}
   document.getElementById('lumi-wk-msg').textContent=wm;
 
   renderHeatmap();
+  renderCategoryBreakdown();
 }
 function renderHeatmap(){
   var wrap=document.getElementById('heatmap-grid');wrap.innerHTML='';
@@ -1568,6 +1634,42 @@ function renderHeatmap(){
     cell.title=ds;
     wrap.appendChild(cell);
   }
+}
+
+function renderCategoryBreakdown(){
+  var el=document.getElementById('cat-breakdown');
+  var totalEl=document.getElementById('cat-breakdown-total');
+  if(!el)return;
+  var cutoff=new Date(Date.now()-30*86400000);
+  var recent=S.expenses.filter(function(e){return new Date(e.date)>cutoff;});
+  if(!recent.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:6px 0;">log expenses to see your breakdown</div>';
+    if(totalEl)totalEl.textContent='';
+    return;
+  }
+  var cats={};
+  recent.forEach(function(e){var c=e.cat||'Other';cats[c]=(cats[c]||0)+e.amt;});
+  var rate=S.goals.length?goalDailySavings(S.goals[0]):S.dailySavings;
+  if(!rate||rate<=0)rate=1;
+  var totalAmt=recent.reduce(function(s,e){return s+e.amt;},0);
+  var totalDays=Math.round(totalAmt/rate*10)/10;
+  if(totalEl)totalEl.textContent=totalDays+'d total';
+  var sorted=Object.keys(cats).sort(function(a,b){return cats[b]-cats[a];}).slice(0,5);
+  var maxAmt=cats[sorted[0]]||1;
+  el.innerHTML=sorted.map(function(cat){
+    var amt=cats[cat];
+    var days=Math.round(amt/rate*10)/10;
+    var barPct=Math.min(100,Math.round(amt/maxAmt*100));
+    var emoji=CAT_EMOJI[cat]||'💸';
+    var barCol=days>5?'var(--amber)':days>2?'#E8C06A':'var(--green)';
+    return '<div class="cat-bar-row">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+        '<div style="font-size:12px;font-weight:700;">'+emoji+' '+esc(cat)+'</div>'+
+        '<div style="font-size:12px;font-weight:800;color:'+barCol+';">'+days+'d</div>'+
+      '</div>'+
+      '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:'+barPct+'%;background:'+barCol+';"></div></div>'+
+    '</div>';
+  }).join('');
 }
 
 // ─── SHARE ────────────────────────────────────────────────────────────────────
