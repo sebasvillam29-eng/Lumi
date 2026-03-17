@@ -1,5 +1,5 @@
-/* Lumi Service Worker — v1 */
-const CACHE = 'lumi-v1';
+/* Lumi Service Worker — v2 */
+const CACHE = 'lumi-v2';
 
 const PRECACHE = [
   './',

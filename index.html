@@ -41,7 +41,8 @@ html.dark{
 html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color:var(--txt);overflow:hidden;}
 .app{width:100%;height:100vh;max-width:430px;margin:0 auto;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden;}
 .screen{display:none;flex-direction:column;height:100%;overflow:hidden;}
-.screen.active{display:flex;}
+.screen.active{display:flex;animation:fadeIn .18s ease both;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .ds{font-family:'DM Serif Display',serif;}
 
@@ -218,6 +219,15 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
 
 /* ── Install Banner ──────────────────────────────────────────────────────── */
 .install-banner{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--card);border-top:1.5px solid var(--border);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));display:flex;align-items:center;gap:10px;z-index:800;box-shadow:0 -6px 28px rgba(0,0,0,.1);}
+
+/* ── Edit Goal Modal ─────────────────────────────────────────────────────── */
+.edit-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:990;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+.edit-modal.active{display:flex;}
+.edit-modal-body{background:var(--bg);border-radius:20px 20px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom,0px));width:100%;max-width:430px;max-height:88vh;overflow-y:auto;}
+
+/* ── History delete button ───────────────────────────────────────────────── */
+.hist-del{background:none;border:none;cursor:pointer;font-size:20px;color:var(--border);padding:4px 0 4px 10px;flex-shrink:0;line-height:1;font-family:'Nunito',sans-serif;transition:color .15s;}
+.hist-del:active{color:var(--amber);}
 </style>
 </head>
 <body>
@@ -509,6 +519,7 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
   </div>
   <div style="flex:1;"></div>
   <div style="flex-shrink:0;padding:0 20px 8px;">
+    <input class="tinp" id="exp-note" type="text" placeholder="note (optional)..." style="margin-bottom:10px;" autocomplete="off"/>
     <button class="btn btn-a" id="log-btn" onclick="logExp()" style="width:100%;margin-bottom:10px;">Log Expense</button>
     <div style="text-align:center;padding-bottom:6px;">
       <button class="ibtn" style="font-size:12px;color:var(--green);font-weight:700;" onclick="go('home')">actually, never mind</button>
@@ -567,7 +578,9 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:var(--txt);"><use href="#ico-back"/></svg>
     </button>
     <div style="font-size:13px;font-weight:800;" id="gd-title">Goal</div>
-    <div style="width:36px;"></div>
+    <button class="topbar-ico" onclick="openEditGoal()" aria-label="Edit goal">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:var(--txt);"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+    </button>
   </div>
   <div id="gd-photo-header" style="display:none;" class="goal-photo-header"></div>
   <div class="scroll" style="padding-bottom:20px;">
@@ -625,6 +638,9 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
       </div>
     </div>
     <div class="divider" style="margin:16px 20px 8px;"></div>
+    <div style="padding:0 20px 8px;" id="gd-primary-wrap" style="display:none;">
+      <button class="btn btn-o" onclick="setAsPrimary()" style="width:100%;font-size:13px;">Set as primary goal 🎯</button>
+    </div>
     <div style="padding:0 20px 8px;">
       <button class="btn btn-o" onclick="shareGoalCard()" style="width:100%;font-size:13px;display:flex;align-items:center;justify-content:center;gap:8px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -640,7 +656,7 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
 <!-- ══ HISTORY ══ -->
 <div class="screen" id="s-history">
   <div class="topbar" style="flex-shrink:0;">
-    <button class="topbar-ico" onclick="go('streak')" aria-label="Back">
+    <button class="topbar-ico" onclick="go('home')" aria-label="Back">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:var(--txt);"><use href="#ico-back"/></svg>
     </button>
     <div style="font-size:13px;font-weight:800;">Expense History</div>
@@ -794,9 +810,34 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
     <div style="height:1px;background:var(--div);margin:8px 18px 16px;"></div>
     <div class="set-section">
       <div class="set-label">data</div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px;">Everything is stored locally on your device. Resetting will delete all goals, expenses, and streak history.</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px;">Everything is stored locally on your device. Export a backup or reset all data.</div>
+      <button class="btn btn-o" onclick="exportData()" style="width:100%;font-size:13px;margin-bottom:10px;">Export backup (JSON)</button>
       <button class="btn btn-danger" onclick="confirmReset()" style="width:100%;">Reset all data</button>
     </div>
+  </div>
+</div>
+
+<!-- ══ EDIT GOAL MODAL ══ -->
+<div class="edit-modal" id="edit-goal-modal" onclick="editModalBackdrop(event)">
+  <div class="edit-modal-body">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:14px;font-weight:800;">Edit Goal</div>
+      <button class="ibtn" style="font-size:26px;color:var(--muted);line-height:1;" onclick="closeEditGoal()" aria-label="Close">×</button>
+    </div>
+    <span class="flbl">goal name</span>
+    <input class="tinp" id="eg-name" type="text" placeholder="Goal name..." style="margin-bottom:12px;"/>
+    <span class="flbl">target amount</span>
+    <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="eg-amt" type="text" inputmode="decimal" placeholder="1,000"/></div>
+    <span class="flbl">saved so far</span>
+    <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="eg-saved" type="text" inputmode="decimal" placeholder="0"/></div>
+    <span class="flbl">target date <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></span>
+    <input class="tinp" id="eg-deadline" type="date" style="margin-bottom:12px;color:var(--txt);"/>
+    <span class="flbl">monthly contribution <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></span>
+    <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="eg-contrib" type="text" inputmode="decimal" placeholder="leave blank for savings rate"/></div>
+    <span class="flbl">why do you want this? <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></span>
+    <input class="tinp" id="eg-reason" type="text" placeholder="motivation..." style="margin-bottom:20px;" onkeydown="if(event.key==='Enter')saveGoalEdit()"/>
+    <button class="btn btn-g" onclick="saveGoalEdit()" style="width:100%;margin-bottom:10px;">Save changes</button>
+    <button class="btn btn-o" onclick="closeEditGoal()" style="width:100%;font-size:13px;">Cancel</button>
   </div>
 </div>
 
@@ -815,10 +856,10 @@ function parseAmt(id){var v=(document.getElementById(id).value||'').replace(/[^0
 // ─── STATE ────────────────────────────────────────────────────────────────────
 var DEFAULT_STATE={
   name:'',goals:[],expenses:[],history:[],
-  streak:0,daysSaved:0,daysLost:0,cat:'Food',
+  streak:0,cat:'Food',
   dailySavings:10,dailyBudget:20,monthlyBudget:0,todaySpent:0,
   lastLogDate:null,shieldsAvailable:1,lastShieldReplenish:null,
-  lastTier:'zero',activeGoalIndex:0,onboardingComplete:false,darkMode:false
+  activeGoalIndex:0,onboardingComplete:false,darkMode:false
 };
 var S=JSON.parse(JSON.stringify(DEFAULT_STATE));
 var currentAmt=0, pickedIcon='ico-star', pendingPhoto=null;
@@ -1061,10 +1102,13 @@ function renderHome(){
 }
 
 // ─── ADD EXPENSE ──────────────────────────────────────────────────────────────
+var _lastTier='zero';
 function initAddExpense(){
-  currentAmt=0;S.cat='Food';S.lastTier='zero';
+  currentAmt=0;S.cat='Food';_lastTier='zero';
   var inp=document.getElementById('exp-input');
   inp.value='';
+  var noteEl=document.getElementById('exp-note');
+  if(noteEl)noteEl.value='';
   react(0);
   document.getElementById('budget-hint').textContent='';
   document.getElementById('log-btn').textContent='Log Expense';
@@ -1143,8 +1187,8 @@ function react(amt){
     else if(tier==='high')logBtn.textContent='Log it — I know 😬';
     else logBtn.textContent='Log it (lumi can\'t even)';
   }
-  if(tier!==S.lastTier){
-    S.lastTier=tier;
+  if(tier!==_lastTier){
+    _lastTier=tier;
     var pool=MSGS[tier];
     var m=pool[Math.floor(Math.random()*pool.length)];
     if(amt>0){var gn=S.goals.length?S.goals[0].name:'your goal';m=m.replace('{d}',d).replace('{g}',gn);}
@@ -1158,7 +1202,10 @@ function logExp(){
   var rate=goalDailySavings(S.goals[0]);
   var d=rate>0?Math.ceil(currentAmt/rate):0;
   S.todaySpent+=currentAmt;
-  S.expenses.push({amt:currentAmt,cat:S.cat,date:new Date().toISOString(),localDate:getTodayStr()});
+  var noteEl=document.getElementById('exp-note');
+  var note=noteEl?noteEl.value.trim():'';
+  S.expenses.push({amt:currentAmt,cat:S.cat,note:note,date:new Date().toISOString(),localDate:getTodayStr()});
+  if(S.expenses.length>500)S.expenses=S.expenses.slice(-500);
   updateDayRecord();updateStreak();saveState();
   var emoji=CAT_EMOJI[S.cat]||'💸';
   toast(d>0?emoji+' $'+Math.round(currentAmt*100)/100+' = '+d+' day'+(d!==1?'s':''):'logged ✓');
@@ -1300,11 +1347,13 @@ function shareCinema(e){
   else if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){toast('copied!');}).catch(function(){toast('progress: '+np+'%');});}
   else{toast('progress: '+np+'% saved!');}
 }
-// Escape key closes cinema
+// Escape key closes cinema and edit modal
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
     var c=document.getElementById('cinema');
     if(c&&c.classList.contains('active'))c.classList.remove('active');
+    var m=document.getElementById('edit-goal-modal');
+    if(m&&m.classList.contains('active'))m.classList.remove('active');
   }
 });
 
@@ -1428,6 +1477,10 @@ function renderGoalDetail(){
   if(g.reason){document.getElementById('gd-reason').textContent='"'+g.reason+'"';reasonWrap.style.display='block';}
   else{reasonWrap.style.display='none';}
 
+  // Show "set as primary" only when this isn't already goal #0
+  var primaryWrap=document.getElementById('gd-primary-wrap');
+  if(primaryWrap)primaryWrap.style.display=S.activeGoalIndex>0?'block':'none';
+
   document.getElementById('boost-input').value='';
   var maxSlider=Math.max(50,Math.round(S.dailySavings*5));
   var sliderEl=document.getElementById('whatif-slider');
@@ -1441,7 +1494,7 @@ function updateWhatIf(){
   var g=S.goals[S.activeGoalIndex];if(!g)return;
   var extra=parseFloat(document.getElementById('whatif-slider').value)||0;
   document.getElementById('whatif-extra').textContent=extra>0?'+$'+extra+'/day':'current rate';
-  var newRate=S.dailySavings+extra;
+  var newRate=goalDailySavings(g)+extra;
   var rem=Math.max(0,g.amount-g.saved);
   var newDays=newRate>0?(rem>0?Math.ceil(rem/newRate):0):'∞';
   var current=daysAway(g);
@@ -1477,6 +1530,72 @@ function applyBoost(){
     toast('+$'+amt+' saved! 🌱');
   }
 }
+// ─── DELETE EXPENSE ───────────────────────────────────────────────────────────
+function deleteExpense(dateStr){
+  var idx=S.expenses.findIndex(function(e){return e.date===dateStr;});
+  if(idx===-1){toast('not found');return;}
+  S.expenses.splice(idx,1);
+  saveState();renderHistory();toast('expense removed');
+}
+
+// ─── EXPORT DATA ──────────────────────────────────────────────────────────────
+function exportData(){
+  var data=JSON.stringify(S,null,2);
+  var blob=new Blob([data],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='lumi-backup-'+getTodayStr()+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},3000);
+  toast('backup saved! 💾');
+}
+
+// ─── SET AS PRIMARY GOAL ──────────────────────────────────────────────────────
+function setAsPrimary(){
+  var idx=S.activeGoalIndex;
+  if(idx===0)return;
+  var g=S.goals.splice(idx,1)[0];
+  S.goals.unshift(g);
+  S.activeGoalIndex=0;
+  saveState();
+  toast(esc(g.name)+' is now your main goal 🎯');
+  renderGoalDetail();
+}
+
+// ─── EDIT GOAL ────────────────────────────────────────────────────────────────
+function openEditGoal(){
+  var g=S.goals[S.activeGoalIndex];if(!g)return;
+  document.getElementById('eg-name').value=g.name||'';
+  document.getElementById('eg-amt').value=g.amount||'';
+  document.getElementById('eg-saved').value=g.saved||'';
+  document.getElementById('eg-deadline').value=g.deadline||'';
+  document.getElementById('eg-contrib').value=g.monthlyContribution||'';
+  document.getElementById('eg-reason').value=g.reason||'';
+  document.getElementById('edit-goal-modal').classList.add('active');
+}
+function closeEditGoal(){
+  document.getElementById('edit-goal-modal').classList.remove('active');
+}
+function editModalBackdrop(e){
+  if(e.target===document.getElementById('edit-goal-modal'))closeEditGoal();
+}
+function saveGoalEdit(){
+  var g=S.goals[S.activeGoalIndex];if(!g)return;
+  var name=document.getElementById('eg-name').value.trim();
+  var amt=parseFloat((document.getElementById('eg-amt').value||'').replace(/[^0-9.]/g,''))||0;
+  var saved=parseFloat((document.getElementById('eg-saved').value||'').replace(/[^0-9.]/g,''))||0;
+  var deadline=document.getElementById('eg-deadline').value||null;
+  var contrib=parseFloat((document.getElementById('eg-contrib').value||'').replace(/[^0-9.]/g,''))||0;
+  var reason=document.getElementById('eg-reason').value.trim();
+  if(!name){toast('give your goal a name!');return;}
+  if(!amt||amt<=0){toast('how much does it cost?');return;}
+  if(saved>amt){toast('saved can\'t exceed goal amount');return;}
+  g.name=name;g.amount=amt;g.saved=Math.min(saved,amt);
+  g.deadline=deadline;g.monthlyContribution=contrib>0?contrib:null;g.reason=reason;
+  if(!g.icon||g.icon==='ico-star')g.icon=getIcon(name);
+  saveState();closeEditGoal();renderGoalDetail();
+  toast('goal updated ✓');
+}
+
 var _deleteConfirmPending=false,_deleteConfirmTimer=null;
 function confirmDeleteGoal(){
   var g=S.goals[S.activeGoalIndex];if(!g)return;
@@ -1543,13 +1662,15 @@ function renderHistory(){
       var emoji=CAT_EMOJI[e.cat]||'💸';
       var rowRate=S.goals.length?goalDailySavings(S.goals[0]):S.dailySavings;
       var d2=rowRate>0?Math.ceil(e.amt/rowRate):0;
+      var safeDate=e.date.replace(/"/g,'&quot;');
       row.innerHTML=
         '<div class="hist-cat-ico" style="font-size:16px;">'+emoji+'</div>'+
-        '<div style="flex:1;">'+
+        '<div style="flex:1;min-width:0;">'+
           '<div style="font-size:13px;font-weight:700;">'+esc(e.cat||'Other')+'</div>'+
-          '<div style="font-size:11px;color:var(--muted);">$'+Math.round(e.amt*100)/100+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);">$'+Math.round(e.amt*100)/100+(e.note?' · '+esc(e.note):'')+'</div>'+
         '</div>'+
-        (d2>0?'<div class="hist-days-tag">'+d2+'d</div>':'');
+        (d2>0?'<div class="hist-days-tag">'+d2+'d</div>':'')+
+        '<button class="hist-del" onclick="deleteExpense(\''+safeDate+'\')" aria-label="Delete expense">×</button>';
       list.appendChild(row);
     });
   });
@@ -1784,7 +1905,7 @@ function _drawShareCard(g){
 
   // Branding footer
   ctx.font='800 32px Nunito,sans-serif';ctx.fillStyle=green;
-  ctx.fillText('lumi-app-eta.vercel.app',W/2,H-200);
+  ctx.fillText(window.location.hostname,W/2,H-200);
   ctx.font='600 26px Nunito,sans-serif';ctx.fillStyle=muted;
   ctx.fillText('track goals in days, not dollars',W/2,H-158);
 
@@ -1877,7 +1998,13 @@ function confirmReset(){
 
 // ─── PERSISTENCE ──────────────────────────────────────────────────────────────
 function saveState(){
-  try{localStorage.setItem('lumi_state',JSON.stringify(S));return true;}catch(e){console.warn('save failed',e);return false;}
+  try{localStorage.setItem('lumi_state',JSON.stringify(S));return true;}
+  catch(e){
+    if(e&&(e.name==='QuotaExceededError'||e.code===22)){
+      toast('⚠️ storage full — export a backup in settings!');
+    }else{console.warn('save failed',e);}
+    return false;
+  }
 }
 function loadState(){
   try{
@@ -1891,8 +2018,6 @@ function loadState(){
     if(typeof S.monthlyBudget!=='number'||S.monthlyBudget<=0)S.monthlyBudget=Math.round(S.dailySavings*30*2);
     S.dailyBudget=Math.round(S.monthlyBudget/30*10)/10;
     if(typeof S.streak!=='number')S.streak=0;
-    if(typeof S.daysSaved!=='number')S.daysSaved=0;
-    if(typeof S.daysLost!=='number')S.daysLost=0;
     if(typeof S.shieldsAvailable!=='number')S.shieldsAvailable=1;
     if(typeof S.todaySpent!=='number')S.todaySpent=0;
     S.goals=S.goals.map(function(g){var m=Object.assign({name:'',amount:0,saved:0,icon:'ico-star',photo:null,reason:'',deadline:null,celebrated:[]},g);if(!Array.isArray(m.celebrated))m.celebrated=[];return m;});
@@ -1907,14 +2032,19 @@ function loadState(){
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 (function init(){
   var ready=loadState();
-  applyDark(S.darkMode||false);
+  // Auto-follow system dark mode preference if user hasn't set a preference
+  if(!S.darkMode&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){
+    applyDark(true);
+  }else{
+    applyDark(S.darkMode||false);
+  }
   if(ready){
     // Handle PWA shortcut: ?action=add
     if(location.search.indexOf('action=add')>-1&&S.goals.length>0)go('add');
     else go('home');
   }
   // Midnight-crossing guard: reset todaySpent if date changes while app is open
-  setInterval(function(){
+  function checkMidnight(){
     var today=getTodayStr();
     var lastDate=localStorage.getItem('lumi_last_date');
     if(!lastDate||lastDate!==today){
@@ -1923,7 +2053,11 @@ function loadState(){
       var h=document.getElementById('s-home');
       if(h&&h.classList.contains('active'))renderHome();
     }
-  },60000);
+  }
+  setInterval(checkMidnight,60000);
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible')checkMidnight();
+  });
   // Register service worker (https or localhost only)
   if('serviceWorker' in navigator&&
      (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
