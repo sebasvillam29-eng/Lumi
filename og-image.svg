@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#FAF8F3"/>
+  <rect width="1200" height="630" fill="url(#grad)" opacity="0.4"/>
+  <defs>
+    <radialGradient id="grad" cx="20%" cy="80%" r="80%">
+      <stop offset="0%" stop-color="#7C9A7E" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FAF8F3" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Lumi blob -->
+  <ellipse cx="200" cy="315" rx="148" ry="155" fill="#7C9A7E"/>
+  <!-- Eyes -->
+  <path d="M148 292 Q164 274 180 292" stroke="white" stroke-width="11" fill="none" stroke-linecap="round"/>
+  <path d="M218 292 Q234 274 250 292" stroke="white" stroke-width="11" fill="none" stroke-linecap="round"/>
+  <!-- Smile -->
+  <path d="M150 346 Q200 384 250 346" stroke="white" stroke-width="11" fill="none" stroke-linecap="round"/>
+  <!-- Sparkle -->
+  <line x1="96" y1="196" x2="102" y2="178" stroke="#7C9A7E" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+  <line x1="306" y1="196" x2="300" y2="178" stroke="#7C9A7E" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+  <!-- Text -->
+  <text x="430" y="260" font-family="Georgia, serif" font-size="72" font-weight="400" fill="#2D2D2D">lumi</text>
+  <text x="430" y="340" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="38" font-weight="700" fill="#7C9A7E" letter-spacing="2">YOUR GOALS, IN DAYS</text>
+  <text x="430" y="408" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" font-weight="400" fill="#888">Track every expense in days. Build streaks. Hit goals.</text>
+  <!-- Days pill example -->
+  <rect x="430" y="450" width="320" height="52" rx="26" fill="#EFF5EF" stroke="#C8D9C8" stroke-width="1.5"/>
+  <text x="590" y="483" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" font-weight="700" fill="#7C9A7E" text-anchor="middle">↑ 5 days ahead of pace</text>
+</svg>

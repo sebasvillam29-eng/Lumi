@@ -6,7 +6,18 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="theme-color" content="#FAF8F3" id="theme-meta"/>
 <link rel="manifest" href="manifest.json"/>
-<link rel="apple-touch-icon" href="icon.svg"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<meta property="og:title" content="Lumi — your goals, in days"/>
+<meta property="og:description" content="See every expense in days, not dollars. Build streaks, track pace, hit your goals."/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://lumi-app-eta.vercel.app/"/>
+<meta property="og:image" content="https://lumi-app-eta.vercel.app/og-image.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Lumi — your goals, in days"/>
+<meta name="twitter:description" content="See every expense in days, not dollars. Build streaks, track pace, hit your goals."/>
+<meta name="twitter:image" content="https://lumi-app-eta.vercel.app/og-image.png"/>
 <title>Lumi — your goals, in days</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
@@ -159,6 +170,12 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
 .info-box{background:var(--gtint);border-radius:12px;padding:12px 14px;border:1px solid var(--gborder);}
 .set-section{margin:0 18px 16px;}
 .set-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+
+/* Pace badge */
+.pace-badge{display:inline-flex;align-items:center;gap:4px;border-radius:100px;padding:4px 10px;font-size:10px;font-weight:800;letter-spacing:.03em;}
+.pace-ahead{background:var(--gtint);color:var(--green);border:1px solid var(--gborder);}
+.pace-behind{background:var(--atint);color:var(--amber);border:1px solid rgba(232,145,90,.3);}
+.pace-on{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
 
 /* Safe area */
 @supports(padding-top:env(safe-area-inset-top)){
@@ -402,6 +419,7 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
         <span id="h-slbl">$0 saved</span><span id="h-glbl">$0 goal</span>
       </div>
       <div id="h-track-badge" style="margin-top:8px;display:none;"></div>
+      <div id="h-pace-badge" style="margin-top:6px;display:none;"></div>
     </div>
     <div class="lbl" style="padding:2px 20px 6px;">all goals</div>
     <div class="scroll">
@@ -543,6 +561,7 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
       </div>
     </div>
     <div id="gd-track-row" style="display:none;padding:0 20px 8px;"></div>
+    <div id="gd-pace-row" style="display:none;padding:0 20px 6px;"></div>
     <div id="gd-reason-wrap" style="display:none;padding:0 20px 8px;">
       <div style="font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;" id="gd-reason"></div>
     </div>
@@ -856,6 +875,24 @@ function ob2Finish(){
   saveState();go('home');
 }
 
+// ─── PACE ENGINE ──────────────────────────────────────────────────────────────
+function paceStatus(g){
+  if(!g.createdAt||!S.dailySavings||S.dailySavings<=0)return null;
+  var start=new Date(g.createdAt+'T12:00:00');
+  var today=new Date();today.setHours(12,0,0,0);
+  var daysElapsed=Math.max(0,Math.round((today-start)/86400000));
+  if(daysElapsed===0)return null;
+  var expected=daysElapsed*S.dailySavings;
+  return Math.round((g.saved-expected)/S.dailySavings);
+}
+function paceBadgeHtml(g){
+  var d=paceStatus(g);
+  if(d===null)return'';
+  if(d>0)return'<span class="pace-badge pace-ahead">↑ '+d+' day'+(d!==1?'s':'')+' ahead of pace</span>';
+  if(d<0)return'<span class="pace-badge pace-behind">↓ '+Math.abs(d)+' day'+(Math.abs(d)!==1?'s':'')+' behind pace</span>';
+  return'<span class="pace-badge pace-on">✓ right on pace</span>';
+}
+
 // ─── GOAL MATH ────────────────────────────────────────────────────────────────
 function daysAway(g){
   if(!S.dailySavings||S.dailySavings<=0)return'∞';
@@ -915,8 +952,17 @@ function renderHome(){
   if(badge){trackEl.innerHTML=badge;trackEl.style.display='block';}
   else{trackEl.style.display='none';}
 
+  var paceEl=document.getElementById('h-pace-badge');
+  var pb=paceBadgeHtml(g);
+  if(pb){paceEl.innerHTML=pb;paceEl.style.display='block';}
+  else{paceEl.style.display='none';}
+
   var n=S.name||'you';
-  document.getElementById('h-greet').textContent=p>70?n+', crushing it ✦':p>40?'hey '+n+', great work':'keep going, '+n;
+  var pace=paceStatus(g);
+  var greet=p>70?n+', crushing it ✦':p>40?'hey '+n+', great work':'keep going, '+n;
+  if(pace!==null&&pace>2)greet=n+', you\'re ahead! ✦';
+  else if(pace!==null&&pace<-2)greet='let\'s catch up, '+n;
+  document.getElementById('h-greet').textContent=greet;
 
   var rem=Math.max(0,S.dailyBudget-S.todaySpent);
   var used=S.dailyBudget>0?Math.min(100,Math.round(S.todaySpent/S.dailyBudget*100)):0;
@@ -1284,6 +1330,11 @@ function renderGoalDetail(){
   var badge=trackBadgeHtml(g);
   if(badge){trackRow.innerHTML=badge;trackRow.style.display='block';}
   else{trackRow.style.display='none';}
+
+  var paceRow=document.getElementById('gd-pace-row');
+  var pb=paceBadgeHtml(g);
+  if(pb){paceRow.innerHTML=pb;paceRow.style.display='block';}
+  else{paceRow.style.display='none';}
 
   var reasonWrap=document.getElementById('gd-reason-wrap');
   if(g.reason){document.getElementById('gd-reason').textContent='"'+g.reason+'"';reasonWrap.style.display='block';}
