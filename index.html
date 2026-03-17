@@ -789,6 +789,7 @@ function go(id){
   if(id==='add')initAddExpense();
   if(id==='settings')renderSettings();
   if(id==='history')renderHistory();
+  if(id==='goal-detail')renderGoalDetail();
 }
 
 // ─── TOAST ────────────────────────────────────────────────────────────────────
@@ -972,9 +973,15 @@ function onAmt(el){
 function updateBudgetHint(amt){
   var hint=document.getElementById('budget-hint');
   if(S.dailyBudget>0&&amt>0){
-    var rem=Math.max(0,S.dailyBudget-S.todaySpent-amt);
-    hint.textContent='leaves $'+Math.round(rem*100)/100+' for the rest of today';
-  }else{hint.textContent='';}
+    var total=S.todaySpent+amt;
+    if(total>S.dailyBudget){
+      hint.textContent='$'+Math.round((total-S.dailyBudget)*100)/100+' over budget today';
+      hint.style.color='var(--amber)';
+    }else{
+      hint.textContent='leaves $'+Math.round((S.dailyBudget-total)*100)/100+' for the rest of today';
+      hint.style.color='';
+    }
+  }else{hint.textContent='';hint.style.color='';}
 }
 
 var MSGS={
@@ -1023,7 +1030,7 @@ function logExp(){
   if(currentAmt<=0){toast('enter an amount first!');return;}
   if(!S.goals.length){toast('create a goal first!');return;}
   var d=S.dailySavings>0?Math.ceil(currentAmt/S.dailySavings):0;
-  S.daysLost+=d;S.todaySpent+=currentAmt;
+  S.todaySpent+=currentAmt;
   S.expenses.push({amt:currentAmt,cat:S.cat,date:new Date().toISOString(),localDate:getTodayStr()});
   updateDayRecord();updateStreak();saveState();
   toast('-'+d+' day'+(d!==1?'s':'')+' 😬');
@@ -1253,7 +1260,11 @@ function openGoalDetail(idx){
   S.activeGoalIndex=(typeof idx==='number')?idx:0;renderGoalDetail();go('goal-detail');
 }
 function renderGoalDetail(){
+  if(_deleteConfirmTimer)clearTimeout(_deleteConfirmTimer);
+  _deleteConfirmPending=false;
   var g=S.goals[S.activeGoalIndex];if(!g){go('home');return;}
+  var delBtn=document.querySelector('#s-goal-detail .btn-danger');
+  if(delBtn)delBtn.textContent='Delete this goal';
   document.getElementById('gd-title').textContent=g.name;
   var photoHeader=document.getElementById('gd-photo-header');
   if(g.photo){photoHeader.style.display='block';photoHeader.style.backgroundImage='url('+g.photo+')';}
@@ -1458,7 +1469,7 @@ function renderStreak(){
   if(!wkE.length){wm='"start logging to see your summary"';}
   else if(wkT<S.dailySavings*2){wm='"quiet week. lumi is proud of you."';}
   else if(d<7){wm='"not bad. lumi is cautiously optimistic."';}
-  else{wm='"$'+Math.round(wkT)+' this week — '+d+' days from '+(S.goals.length?S.goals[0].name:'your goal')+' ."';}
+  else{wm='"$'+Math.round(wkT)+' this week — '+d+' days from '+(S.goals.length?S.goals[0].name:'your goal')+'."';}
   document.getElementById('lumi-wk-msg').textContent=wm;
 
   renderHeatmap();
@@ -1536,7 +1547,7 @@ function confirmReset(){
 
 // ─── PERSISTENCE ──────────────────────────────────────────────────────────────
 function saveState(){
-  try{localStorage.setItem('lumi_state',JSON.stringify(S));}catch(e){console.warn('save failed',e);}
+  try{localStorage.setItem('lumi_state',JSON.stringify(S));return true;}catch(e){console.warn('save failed',e);return false;}
 }
 function loadState(){
   try{
@@ -1553,11 +1564,11 @@ function loadState(){
     if(typeof S.daysLost!=='number')S.daysLost=0;
     if(typeof S.shieldsAvailable!=='number')S.shieldsAvailable=1;
     if(typeof S.todaySpent!=='number')S.todaySpent=0;
-    S.goals=S.goals.map(function(g){return Object.assign({name:'',amount:0,saved:0,icon:'ico-star',photo:null,reason:'',deadline:null,celebrated:[],createdAt:getTodayStr()},g);});
+    S.goals=S.goals.map(function(g){var m=Object.assign({name:'',amount:0,saved:0,icon:'ico-star',photo:null,reason:'',deadline:null,celebrated:[],createdAt:getTodayStr()},g);if(!Array.isArray(m.celebrated))m.celebrated=[];return m;});
     // New day reset
     var lastDate=localStorage.getItem('lumi_last_date');
     var today=getTodayStr();
-    if(lastDate!==today){S.todaySpent=0;localStorage.setItem('lumi_last_date',today);replenishShield();saveState();}
+    if(lastDate!==today){S.todaySpent=0;replenishShield();if(saveState())localStorage.setItem('lumi_last_date',today);}
     return S.onboardingComplete;
   }catch(e){console.warn('loadState error',e);return false;}
 }
@@ -1571,6 +1582,17 @@ function loadState(){
     if(location.search.indexOf('action=add')>-1&&S.goals.length>0)go('add');
     else go('home');
   }
+  // Midnight-crossing guard: reset todaySpent if date changes while app is open
+  setInterval(function(){
+    var today=getTodayStr();
+    var lastDate=localStorage.getItem('lumi_last_date');
+    if(lastDate&&lastDate!==today){
+      S.todaySpent=0;replenishShield();
+      if(saveState())localStorage.setItem('lumi_last_date',today);
+      var h=document.getElementById('s-home');
+      if(h&&h.classList.contains('active'))renderHome();
+    }
+  },60000);
   // Register service worker (https or localhost only)
   if('serviceWorker' in navigator&&
      (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
