@@ -1,5 +1,5 @@
-/* Lumi Service Worker — v2 */
-const CACHE = 'lumi-v2';
+/* Lumi Service Worker — v3 */
+const CACHE = 'lumi-v3';
 
 const PRECACHE = [
   './',
@@ -14,22 +14,20 @@ const PRECACHE = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE)
-      .then(cache => {
-        // addAll fails if any request fails — use individual puts so a missing
-        // file (e.g. index.html doesn't exist yet locally) doesn't break the SW
-        return Promise.allSettled(
+      .then(cache =>
+        Promise.allSettled(
           PRECACHE.map(url =>
-            fetch(url).then(res => {
+            fetch(url + '?v=3').then(res => {
               if (res.ok) cache.put(url, res);
             }).catch(() => {})
           )
-        );
-      })
+        )
+      )
       .then(() => self.skipWaiting())
   );
 });
 
-// ── Activate: prune old caches ──────────────────────────────────────────────
+// ── Activate: prune old caches, then force-reload all open tabs ─────────────
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
@@ -37,32 +35,19 @@ self.addEventListener('activate', event => {
         keys.filter(k => k !== CACHE).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window' }))
+      .then(clients => clients.forEach(client => client.navigate(client.url)))
   );
 });
 
-// ── Fetch: cache strategy ───────────────────────────────────────────────────
+// ── Fetch: network-first for everything ─────────────────────────────────────
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Only handle GET requests
   if (request.method !== 'GET') return;
 
-  // Navigation (page loads) — network-first, cache fallback
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then(res => {
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(request, clone));
-          return res;
-        })
-        .catch(() => caches.match('./index.html').then(function(r){return r||caches.match('./')}))
-    );
-    return;
-  }
-
-  // Google Fonts — cache-first (they're immutable)
+  // Google Fonts — cache-first (immutable CDN assets)
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
     event.respondWith(
       caches.match(request).then(cached => {
@@ -71,23 +56,27 @@ self.addEventListener('fetch', event => {
           const clone = res.clone();
           caches.open(CACHE).then(c => c.put(request, clone));
           return res;
-        }).catch(() => new Response('', { status: 408, statusText: 'Offline' }));
+        }).catch(() => new Response('', { status: 408 }));
       })
     );
     return;
   }
 
-  // Same-origin assets — cache-first, network fallback + update
+  // Everything else — network-first, cache fallback
   if (url.origin === self.location.origin) {
     event.respondWith(
-      caches.match(request).then(cached => {
-        const networkFetch = fetch(request).then(res => {
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(request, clone));
+      fetch(request)
+        .then(res => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE).then(c => c.put(request, clone));
+          }
           return res;
-        });
-        return cached || networkFetch;
-      })
+        })
+        .catch(() =>
+          caches.match(request)
+            .then(r => r || caches.match('./index.html'))
+        )
     );
   }
 });
