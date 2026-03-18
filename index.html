@@ -417,7 +417,7 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
       <div class="dot" style="width:7px;height:7px;background:var(--green);opacity:.28;top:-4px;right:14px;"></div>
       <div class="dot" style="width:5px;height:5px;background:var(--green);opacity:.16;top:24px;right:-10px;"></div>
       <div class="blob lg green" id="lumi-home">
-        <svg viewBox="0 0 130 130"><path d="M40 50 Q50 38 60 50" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M70 50 Q80 38 90 50" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M42 84 Q65 100 88 84" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 130 130" id="lumi-home-face"><path d="M40 50 Q50 38 60 50" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M70 50 Q80 38 90 50" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M42 84 Q65 100 88 84" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>
       </div>
     </div>
   </div>
@@ -456,6 +456,16 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
         <span style="font-size:12px;font-weight:700;color:var(--muted);">add a goal</span>
       </div>
       <div style="height:8px;"></div>
+    </div>
+  </div>
+
+  <div id="lumi-chat-bar" style="display:none;padding:6px 18px;flex-shrink:0;">
+    <div style="display:flex;gap:8px;align-items:center;background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:7px 12px;">
+      <span style="font-size:16px;line-height:1;flex-shrink:0;">💬</span>
+      <input id="lumi-chat-input" type="text" placeholder="talk to lumi... 'spent $15 on food'" style="flex:1;border:none;outline:none;background:transparent;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;color:var(--txt);" autocomplete="off" onkeydown="if(event.key==='Enter')sendLumiChat()"/>
+      <button onclick="sendLumiChat()" style="background:var(--green);border:none;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;" aria-label="Send">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
     </div>
   </div>
 
@@ -756,6 +766,11 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
       <button class="btn btn-g" onclick="go('add')" style="flex:1;">Log an expense</button>
       <button class="btn btn-o" onclick="shareStreak()" style="flex:1;">Share</button>
     </div>
+    <div style="padding:0 20px 4px;">
+      <button class="btn btn-o" onclick="getLumiWrapped()" style="width:100%;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <span>✨</span> get your month wrapped
+      </button>
+    </div>
     <div style="padding:0 20px 16px;">
       <button class="btn btn-o" onclick="go('history')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color:var(--muted);"><use href="#ico-list"/></svg>
@@ -809,6 +824,41 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
     </div>
     <div style="height:1px;background:var(--div);margin:8px 18px 16px;"></div>
     <div class="set-section">
+      <div class="set-label">spending categories</div>
+      <div id="cat-list" style="margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input class="tinp" id="new-cat-name" type="text" placeholder="Add category..." style="flex:1;" onkeydown="if(event.key==='Enter')addCategory()"/>
+        <button class="btn btn-g" onclick="addCategory()" style="width:auto;padding:0 16px;flex-shrink:0;min-height:48px;font-size:13px;">Add</button>
+      </div>
+    </div>
+    <div style="height:1px;background:var(--div);margin:8px 18px 16px;"></div>
+    <div class="set-section">
+      <div class="set-label">recurring expenses</div>
+      <div id="recurring-list" style="margin-bottom:8px;"></div>
+      <div id="recurring-add-form" style="display:none;background:var(--card2);border-radius:12px;padding:12px;border:1.5px solid var(--border);margin-bottom:8px;">
+        <span class="flbl">name</span>
+        <input class="tinp" id="rec-name" type="text" placeholder="Netflix, Rent..." style="margin-bottom:8px;"/>
+        <span class="flbl">amount</span>
+        <div class="mrow" style="margin-bottom:8px;"><span class="msym">$</span><input class="minp" id="rec-amt" type="text" inputmode="decimal" placeholder="0"/></div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <div style="flex:1;">
+            <span class="flbl">day of month</span>
+            <input class="tinp" id="rec-day" type="number" min="1" max="28" placeholder="1–28"/>
+          </div>
+          <div style="flex:1;">
+            <span class="flbl">category</span>
+            <select id="rec-cat" class="tinp" style="color:var(--txt);"></select>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-g" onclick="addRecurring()" style="flex:1;font-size:13px;">Add</button>
+          <button class="btn btn-o" onclick="toggleRecurringAdd()" style="flex:1;font-size:13px;">Cancel</button>
+        </div>
+      </div>
+      <button class="btn btn-o" id="rec-add-btn" onclick="toggleRecurringAdd()" style="width:100%;font-size:13px;">+ Add recurring</button>
+    </div>
+    <div style="height:1px;background:var(--div);margin:8px 18px 16px;"></div>
+    <div class="set-section">
       <div class="set-label">data</div>
       <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px;">Everything is stored locally on your device. Export a backup or reset all data.</div>
       <button class="btn btn-o" onclick="exportData()" style="width:100%;font-size:13px;margin-bottom:10px;">Export backup (JSON)</button>
@@ -859,14 +909,18 @@ var DEFAULT_STATE={
   streak:0,cat:'Food',
   dailySavings:10,dailyBudget:20,monthlyBudget:0,todaySpent:0,
   lastLogDate:null,shieldsAvailable:1,lastShieldReplenish:null,
-  activeGoalIndex:0,onboardingComplete:false,darkMode:false
+  activeGoalIndex:0,onboardingComplete:false,darkMode:false,
+  categories:['Food','Shopping','Going Out','Transport','Health','Coffee'],
+  catEmoji:{},
+  recurring:[]
 };
 var S=JSON.parse(JSON.stringify(DEFAULT_STATE));
 var currentAmt=0, pickedIcon='ico-star', pendingPhoto=null;
 
 var ICON_MAP={tokyo:'ico-plane',trip:'ico-plane',flight:'ico-plane',vacation:'ico-plane',travel:'ico-plane',iphone:'ico-phone',phone:'ico-phone',mobile:'ico-phone',laptop:'ico-laptop',macbook:'ico-laptop',computer:'ico-laptop',car:'ico-car',auto:'ico-car',emergency:'ico-shield',fund:'ico-shield',home:'ico-home',house:'ico-home',apartment:'ico-home'};
 var BGS=['#EFF5EF','#EEF0FA','#FFF8EE','#FFFBEE','#FEF0E8','#EDF5FF'];
-var CAT_EMOJI={Food:'🍔',Shopping:'🛍️','Going Out':'🎉',Transport:'🚗',Health:'💊',Coffee:'☕'};
+var BASE_CAT_EMOJI={Food:'🍔',Shopping:'🛍️','Going Out':'🎉',Transport:'🚗',Health:'💊',Coffee:'☕',Rent:'🏠',Entertainment:'🎬',Subscriptions:'📱',Travel:'✈️',Fitness:'💪',Education:'📚',Beauty:'💄',Pets:'🐾',Gifts:'🎁',Savings:'🐷'};
+function getCatEmoji(cat){return BASE_getCatEmoji(cat)||(S.catEmoji&&S.catEmoji[cat])||'💸';}
 
 function getIcon(name){var low=(name||'').toLowerCase();for(var k in ICON_MAP){if(low.indexOf(k)>-1)return ICON_MAP[k];}return'ico-star';}
 function svgIcon(id,size,color){return'<svg width="'+(size||18)+'" height="'+(size||18)+'" viewBox="0 0 24 24" fill="'+(color||'var(--green)')+'"><use href="#'+id+'"/></svg>';}
@@ -1030,7 +1084,16 @@ function renderHome(){
   document.getElementById('h-empty').style.display=hasGoals?'none':'flex';
   document.getElementById('h-goals-section').style.display=hasGoals?'flex':'none';
   document.getElementById('budget-bar').style.display=hasGoals?'block':'none';
-  document.getElementById('lumi-home-wrap').style.display=hasGoals?'none':'flex';
+  // Always show Lumi; shrink when goals are present
+  var lumiWrap=document.getElementById('lumi-home-wrap');
+  if(lumiWrap)lumiWrap.style.padding=hasGoals?'3px 0 2px':'6px 0 4px';
+  var lumiBlob=document.getElementById('lumi-home');
+  if(lumiBlob){lumiBlob.className='blob '+(hasGoals?'sm':'lg')+' green';}
+  document.getElementById('lumi-home-wrap').style.display='flex';
+  // Chat bar
+  var chatBar=document.getElementById('lumi-chat-bar');
+  if(chatBar)chatBar.style.display=hasGoals?'block':'none';
+  updateHomeLumiMood();
   document.getElementById('h-streak-num').textContent=S.streak;
 
   if(!hasGoals){
@@ -1104,17 +1167,23 @@ function renderHome(){
 // ─── ADD EXPENSE ──────────────────────────────────────────────────────────────
 var _lastTier='zero';
 function initAddExpense(){
-  currentAmt=0;S.cat='Food';_lastTier='zero';
+  currentAmt=0;_lastTier='zero';
   var inp=document.getElementById('exp-input');
   inp.value='';
   var noteEl=document.getElementById('exp-note');
   if(noteEl)noteEl.value='';
+  // Render dynamic category pills
+  var cats=S.categories&&S.categories.length?S.categories:['Food','Shopping','Going Out','Transport','Health','Coffee'];
+  S.cat=cats[0];
+  var pillsEl=document.getElementById('cat-pills');
+  if(pillsEl){
+    pillsEl.innerHTML=cats.map(function(c,i){
+      return '<div class="pill'+(i===0?' on':'')+'" onclick="pickCat(this,\''+c.replace(/'/g,'&#39;')+'\')" role="button">'+esc(c)+'</div>';
+    }).join('');
+  }
   react(0);
   document.getElementById('budget-hint').textContent='';
   document.getElementById('log-btn').textContent='Log Expense';
-  document.querySelectorAll('#cat-pills .pill').forEach(function(p){p.classList.remove('on');});
-  var first=document.querySelector('#cat-pills .pill');
-  if(first)first.classList.add('on');
   setTimeout(function(){inp.focus();},120);
 }
 function pickCat(el,cat){
@@ -1207,7 +1276,7 @@ function logExp(){
   S.expenses.push({amt:currentAmt,cat:S.cat,note:note,date:new Date().toISOString(),localDate:getTodayStr()});
   if(S.expenses.length>500)S.expenses=S.expenses.slice(-500);
   updateDayRecord();updateStreak();saveState();
-  var emoji=CAT_EMOJI[S.cat]||'💸';
+  var emoji=getCatEmoji(S.cat)||'💸';
   toast(d>0?emoji+' $'+Math.round(currentAmt*100)/100+' = '+d+' day'+(d!==1?'s':''):'logged ✓');
   go('home');
 }
@@ -1659,7 +1728,7 @@ function renderHistory(){
     exps.forEach(function(e){
       var row=document.createElement('div');
       row.className='hist-row';
-      var emoji=CAT_EMOJI[e.cat]||'💸';
+      var emoji=getCatEmoji(e.cat)||'💸';
       var rowRate=S.goals.length?goalDailySavings(S.goals[0]):S.dailySavings;
       var d2=rowRate>0?Math.ceil(e.amt/rowRate):0;
       var safeDate=e.date.replace(/"/g,'&quot;');
@@ -1781,7 +1850,7 @@ function renderCategoryBreakdown(){
     var amt=cats[cat];
     var days=Math.round(amt/rate*10)/10;
     var barPct=Math.min(100,Math.round(amt/maxAmt*100));
-    var emoji=CAT_EMOJI[cat]||'💸';
+    var emoji=getCatEmoji(cat)||'💸';
     var barCol=days>5?'var(--amber)':days>2?'#E8C06A':'var(--green)';
     return '<div class="cat-bar-row">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;">'+
@@ -1952,6 +2021,8 @@ function renderSettings(){
   document.getElementById('set-budget').value=S.monthlyBudget>0?S.monthlyBudget:'';
   document.getElementById('dark-toggle').checked=S.darkMode||false;
   updateSetHint();
+  renderCategoryList();
+  renderRecurringList();
 }
 function updateSetHint(){
   var ms=parseFloat((document.getElementById('set-save').value||'').replace(/[^0-9.]/g,''))||0;
@@ -2020,13 +2091,318 @@ function loadState(){
     if(typeof S.streak!=='number')S.streak=0;
     if(typeof S.shieldsAvailable!=='number')S.shieldsAvailable=1;
     if(typeof S.todaySpent!=='number')S.todaySpent=0;
+    if(!Array.isArray(S.categories)||!S.categories.length)S.categories=['Food','Shopping','Going Out','Transport','Health','Coffee'];
+    if(!S.catEmoji||typeof S.catEmoji!=='object')S.catEmoji={};
+    if(!Array.isArray(S.recurring))S.recurring=[];
     S.goals=S.goals.map(function(g){var m=Object.assign({name:'',amount:0,saved:0,icon:'ico-star',photo:null,reason:'',deadline:null,celebrated:[]},g);if(!Array.isArray(m.celebrated))m.celebrated=[];return m;});
     // New day reset
     var lastDate=localStorage.getItem('lumi_last_date');
     var today=getTodayStr();
     if(lastDate!==today){S.todaySpent=0;replenishShield();if(saveState())localStorage.setItem('lumi_last_date',today);}
+    autoLogRecurring();
     return S.onboardingComplete;
   }catch(e){console.warn('loadState error',e);return false;}
+}
+
+// ─── HOME LUMI MOOD ───────────────────────────────────────────────────────────
+function updateHomeLumiMood(){
+  var face=document.getElementById('lumi-home-face');
+  var blobEl=document.getElementById('lumi-home');
+  if(!face)return;
+  var g=S.goals.length?S.goals[0]:null;
+  var pace=g?paceStatus(g):null;
+  var p=g?pct(g):0;
+  var eyeL,eyeR,mouth,blobCol;
+  if(p>=100){
+    eyeL='M38 52 Q50 36 62 52';eyeR='M68 52 Q80 36 92 52';mouth='M38 82 Q65 106 90 82';blobCol='var(--green)';
+  }else if(pace!==null&&pace>2){
+    eyeL='M40 50 Q50 38 60 50';eyeR='M70 50 Q80 38 90 50';mouth='M38 82 Q65 104 90 82';blobCol='var(--green)';
+  }else if(pace!==null&&pace<-2){
+    eyeL='M40 44 Q50 56 60 44';eyeR='M70 44 Q80 56 90 44';mouth='M42 94 Q65 82 88 94';blobCol='var(--amber)';
+  }else{
+    eyeL='M40 50 Q50 38 60 50';eyeR='M70 50 Q80 38 90 50';mouth='M42 84 Q65 100 88 84';blobCol='var(--green)';
+  }
+  face.innerHTML=
+    '<path d="'+eyeL+'" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>'+
+    '<path d="'+eyeR+'" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>'+
+    '<path d="'+mouth+'" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>';
+  if(blobEl)blobEl.style.background=blobCol;
+}
+
+// ─── RECURRING EXPENSES ───────────────────────────────────────────────────────
+function autoLogRecurring(){
+  if(!S.recurring||!S.recurring.length)return;
+  var today=new Date(),dom=today.getDate(),todayStr=getTodayStr(),logged=false;
+  S.recurring.forEach(function(r){
+    if(r.dayOfMonth!==dom)return;
+    var already=S.expenses.some(function(e){return e.localDate===todayStr&&e.recurringId===r.id;});
+    if(!already){
+      S.todaySpent+=r.amount;
+      S.expenses.push({amt:r.amount,cat:r.cat,note:r.name+' (recurring)',date:new Date().toISOString(),localDate:todayStr,recurringId:r.id});
+      if(S.expenses.length>500)S.expenses=S.expenses.slice(-500);
+      logged=true;
+    }
+  });
+  if(logged)updateDayRecord();
+}
+function renderRecurringList(){
+  var el=document.getElementById('recurring-list');if(!el)return;
+  var recs=S.recurring||[];
+  if(!recs.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0 8px;">no recurring expenses yet</div>';return;}
+  el.innerHTML=recs.map(function(r,i){
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--div);">'+
+      '<div><div style="font-size:13px;font-weight:700;">'+getCatEmoji(r.cat)+' '+esc(r.name)+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);">$'+r.amount+' · day '+r.dayOfMonth+' of each month</div></div>'+
+      '<button class="ibtn" style="color:var(--muted);font-size:20px;line-height:1;" onclick="deleteRecurring('+i+')">×</button>'+
+    '</div>';
+  }).join('');
+}
+function toggleRecurringAdd(){
+  var form=document.getElementById('recurring-add-form');
+  var btn=document.getElementById('rec-add-btn');
+  if(!form)return;
+  var showing=form.style.display!=='none';
+  form.style.display=showing?'none':'block';
+  if(btn)btn.style.display=showing?'block':'none';
+  if(!showing){
+    var sel=document.getElementById('rec-cat');
+    if(sel){
+      var cats=S.categories||['Food','Shopping','Going Out','Transport','Health','Coffee'];
+      sel.innerHTML=cats.map(function(c){return'<option value="'+esc(c)+'">'+getCatEmoji(c)+' '+esc(c)+'</option>';}).join('');
+    }
+  }
+}
+function addRecurring(){
+  var name=(document.getElementById('rec-name').value||'').trim();
+  var amt=parseFloat((document.getElementById('rec-amt').value||'').replace(/[^0-9.]/g,''))||0;
+  var day=parseInt(document.getElementById('rec-day').value)||0;
+  var cat=document.getElementById('rec-cat').value||'Food';
+  if(!name){toast('give it a name!');return;}
+  if(!amt||amt<=0){toast('enter an amount');return;}
+  if(!day||day<1||day>28){toast('enter a day between 1 and 28');return;}
+  if(!S.recurring)S.recurring=[];
+  S.recurring.push({id:Date.now(),name:name,amount:amt,cat:cat,dayOfMonth:day});
+  document.getElementById('rec-name').value='';
+  document.getElementById('rec-amt').value='';
+  document.getElementById('rec-day').value='';
+  saveState();renderRecurringList();toggleRecurringAdd();
+  toast(name+' added 🔄');
+}
+function deleteRecurring(idx){
+  if(!S.recurring||idx>=S.recurring.length)return;
+  var name=S.recurring[idx].name;
+  S.recurring.splice(idx,1);
+  saveState();renderRecurringList();
+  toast(name+' removed');
+}
+
+// ─── CUSTOM CATEGORIES ────────────────────────────────────────────────────────
+function renderCategoryList(){
+  var el=document.getElementById('cat-list');if(!el)return;
+  var DEFAULT_CATS=['Food','Shopping','Going Out','Transport','Health','Coffee'];
+  var cats=S.categories||DEFAULT_CATS;
+  el.innerHTML=cats.map(function(c,i){
+    var isDefault=DEFAULT_CATS.indexOf(c)>-1;
+    return'<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--div);">'+
+      '<span style="font-size:13px;font-weight:600;">'+getCatEmoji(c)+' '+esc(c)+'</span>'+
+      (isDefault
+        ?'<span style="font-size:10px;font-weight:600;color:var(--ph);">default</span>'
+        :'<button class="ibtn" style="color:var(--muted);font-size:20px;line-height:1;" onclick="deleteCategory('+i+')">×</button>')+
+    '</div>';
+  }).join('')||'<div style="font-size:12px;color:var(--muted);padding:8px 0;">add a category below</div>';
+}
+function addCategory(){
+  var inp=document.getElementById('new-cat-name');
+  var name=inp?inp.value.trim():'';
+  if(!name){toast('enter a category name');return;}
+  if(!S.categories)S.categories=['Food','Shopping','Going Out','Transport','Health','Coffee'];
+  if(S.categories.indexOf(name)>-1){toast('already exists!');return;}
+  S.categories.push(name);
+  if(inp)inp.value='';
+  saveState();renderCategoryList();
+  toast(name+' added ✓');
+}
+function deleteCategory(idx){
+  if(!S.categories||S.categories.length<=1){toast('keep at least one category');return;}
+  var cat=S.categories[idx];
+  S.categories.splice(idx,1);
+  saveState();renderCategoryList();
+  toast(cat+' removed');
+}
+
+// ─── TALK TO LUMI ─────────────────────────────────────────────────────────────
+var BASE_KEYWORDS={
+  Food:['food','eat','ate','lunch','dinner','breakfast','restaurant','meal','pizza','sushi','burger','sandwich','salad','taco','groceries','grocery','snack'],
+  Coffee:['coffee','cafe','starbucks','latte','espresso','tea','boba','matcha','juice'],
+  Shopping:['shopping','amazon','clothes','shoes','store','bought','shirt','pants','dress','online','shop','purchase'],
+  Transport:['uber','lyft','gas','transit','bus','metro','taxi','parking','car','ride','train','flight','toll'],
+  Health:['health','pharmacy','doctor','gym','medicine','drug','workout','fitness','dentist','therapy'],
+  'Going Out':['bar','club','party','drinks','movie','concert','entertainment','fun','night out','tickets']
+};
+function matchCategory(hint){
+  var lower=(hint||'').toLowerCase();
+  var cats=S.categories||['Food','Shopping','Going Out','Transport','Health','Coffee'];
+  for(var i=0;i<cats.length;i++){if(lower.includes(cats[i].toLowerCase()))return cats[i];}
+  for(var cat in BASE_KEYWORDS){
+    if(cats.indexOf(cat)===-1)continue;
+    if(BASE_KEYWORDS[cat].some(function(k){return lower.includes(k);}))return cat;
+  }
+  return cats[0]||'Food';
+}
+function sendLumiChat(){
+  var inp=document.getElementById('lumi-chat-input');
+  if(!inp)return;
+  var text=inp.value.trim();if(!text)return;
+  inp.value='';parseLumiChat(text);
+}
+function parseLumiChat(text){
+  var lower=text.toLowerCase().trim();
+  // Summary queries
+  if(/how.*(am i|going|doing|week|month)/i.test(lower)){lumiChatReply(generateWeekSummary());return;}
+  // Budget remaining
+  if(/(?:budget|left|remaining)/i.test(lower)&&!/\d/.test(lower)){
+    var rem=S.dailyBudget>0?Math.max(0,S.dailyBudget-S.todaySpent):0;
+    var over2=S.dailyBudget>0&&S.todaySpent>S.dailyBudget;
+    lumiChatReply(over2?'"$'+Math.round(S.todaySpent-S.dailyBudget)+' over budget today"':'"$'+Math.round(rem)+' left for today 🌱"');
+    return;
+  }
+  // Days query: "how many days is $X"
+  var dq=lower.match(/(?:how many days|what.*cost|days is)\s*\$?(\d+(?:\.\d+)?)/i);
+  if(dq){
+    var qa=parseFloat(dq[1]),qr=S.goals.length?goalDailySavings(S.goals[0]):S.dailySavings;
+    var qd=qr>0?Math.ceil(qa/qr):0;
+    lumiChatReply('"$'+qa+' = '+qd+' day'+(qd!==1?'s':'')+' from '+(S.goals.length?S.goals[0].name:'your goal')+'"');return;
+  }
+  // Boost / savings deposit
+  var bm=lower.match(/(?:add|put|save[d]?|deposit(?:ed)?|boost)\s*\$?(\d+(?:\.\d+)?)\s*(?:to|toward[s]?|into|in|for)?\s*(.*)/i);
+  if(bm&&S.goals.length){
+    var bAmt=parseFloat(bm[1]);
+    if(bAmt>0){
+      var bg=S.goals[0],bPrev=pct(bg),bPrevD=daysAway(bg);
+      bg.saved=Math.min(bg.amount,bg.saved+bAmt);
+      var bGained=(typeof bPrevD==='number'&&typeof daysAway(bg)==='number')?Math.max(0,bPrevD-daysAway(bg)):0;
+      saveState();
+      lumiChatReply('"added $'+bAmt+' to '+bg.name+'!'+(bGained>0?' +'+bGained+'d closer 🌱':' 🌱')+'"');
+      renderHome();
+      if(bGained>0)triggerCinema(bGained,bg,bPrev,null);
+      return;
+    }
+  }
+  // Expense logging: "spent $X on Y" / "$X food" etc
+  var em=lower.match(/(?:spent|paid|bought|had|got|logged?)?\s*\$?(\d+(?:\.\d+)?)\s*(?:on|for|at|in|from)?\s*(.*)/i);
+  if(em){
+    var eAmt=parseFloat(em[1]),hint=(em[2]||'').trim();
+    if(eAmt>0&&S.goals.length){
+      var cat=matchCategory(hint||lower);
+      var er=goalDailySavings(S.goals[0]);
+      var ed=er>0?Math.ceil(eAmt/er):0;
+      S.todaySpent+=eAmt;
+      S.expenses.push({amt:eAmt,cat:cat,note:hint||'',date:new Date().toISOString(),localDate:getTodayStr()});
+      if(S.expenses.length>500)S.expenses=S.expenses.slice(-500);
+      updateDayRecord();updateStreak();saveState();
+      lumiChatReply('"logged! '+getCatEmoji(cat)+' $'+eAmt+(ed>0?' = '+ed+'d from '+S.goals[0].name:'')+'."');
+      renderHome();return;
+    }
+  }
+  lumiChatReply('"try: \'spent $15 on food\' · \'add $100 to '+(S.goals.length?S.goals[0].name:'goal')+'\' · \'how\'s my budget?\'"');
+}
+function lumiChatReply(msg){toast(msg.replace(/^"|"$/g,''));}
+function generateWeekSummary(){
+  var rate=S.goals.length?goalDailySavings(S.goals[0]):S.dailySavings;
+  var wkAgo=new Date(Date.now()-7*86400000);
+  var wkE=S.expenses.filter(function(e){return new Date(e.date)>wkAgo;});
+  var wkT=wkE.reduce(function(s,e){return s+e.amt;},0);
+  var d=rate>0?Math.round(wkT/rate*10)/10:0;
+  var g=S.goals.length?S.goals[0].name:'your goal';
+  if(!wkE.length)return'"nothing logged this week yet 🌱"';
+  if(d<=2)return'"quiet week — lumi approves 🌱"';
+  if(d<7)return'"$'+Math.round(wkT)+' this week = '+d+' days. not bad!"';
+  return'"$'+Math.round(wkT)+' this week — '+d+' days from '+g+'."';
+}
+
+// ─── LUMI WRAPPED ─────────────────────────────────────────────────────────────
+function getLumiWrapped(){
+  toast('generating your month...');
+  document.fonts.ready.then(function(){_drawWrapped();});
+}
+function _drawWrapped(){
+  var W=1080,H=1920;
+  var canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+  var ctx=canvas.getContext('2d');
+  var dark=document.documentElement.classList.contains('dark');
+  var bg=dark?'#1C1C1A':'#FAF8F3',card=dark?'#252522':'#fff',green=dark?'#8AAD8C':'#7C9A7E';
+  var txt2=dark?'#EDE9E2':'#2D2D2D',muted=dark?'#6B6860':'#888',amber=dark?'#E89060':'#E8915A';
+  var gtint=dark?'rgba(138,173,140,.15)':'#EFF5EF',atint=dark?'rgba(232,144,90,.15)':'#FDF4EE';
+  var now=new Date(),monthStart=new Date(now.getFullYear(),now.getMonth(),1);
+  var monthStr=now.toLocaleDateString('en-US',{month:'long',year:'numeric'}).toUpperCase();
+  var monthExp=S.expenses.filter(function(e){return new Date(e.date)>=monthStart;});
+  var totalAmt=monthExp.reduce(function(s,e){return s+e.amt;},0);
+  var rate=S.goals.length?goalDailySavings(S.goals[0]):S.dailySavings;
+  var totalDays=rate>0?Math.round(totalAmt/rate*10)/10:0;
+  var cats={};monthExp.forEach(function(e){var c=e.cat||'Other';cats[c]=(cats[c]||0)+e.amt;});
+  var topCat=Object.keys(cats).sort(function(a,b){return cats[b]-cats[a];})[0]||null;
+  var mHist=S.history.filter(function(h){return new Date(h.date+'T12:00:00')>=monthStart;});
+  var underDays=mHist.filter(function(h){return h.type==='saved';}).length;
+  var overDays=mHist.filter(function(h){return h.type==='lost';}).length;
+  // Background + glow
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  var grd=ctx.createRadialGradient(W*.5,0,0,W*.5,0,W*.9);
+  grd.addColorStop(0,dark?'rgba(138,173,140,.2)':'rgba(124,154,126,.14)');grd.addColorStop(1,'transparent');
+  ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+  // Header
+  ctx.textAlign='center';
+  ctx.font='800 42px Nunito,sans-serif';ctx.fillStyle=green;ctx.fillText(monthStr,W/2,140);
+  ctx.font='700 32px Nunito,sans-serif';ctx.fillStyle=muted;ctx.fillText('your lumi month ✨',W/2,192);
+  // Lumi blob
+  var bx=W/2,by=420;
+  ctx.save();ctx.beginPath();ctx.ellipse(bx,by,150,158,0,0,Math.PI*2);ctx.fillStyle=underDays>=overDays?green:amber;ctx.fill();ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=14;ctx.lineCap='round';
+  if(underDays>=overDays){_arc2(ctx,bx-52,by-38,bx-32,by-60,bx-12,by-38);_arc2(ctx,bx+12,by-38,bx+32,by-60,bx+52,by-38);_arc2(ctx,bx-56,by+22,bx,by+74,bx+56,by+22);}
+  else{_arc2(ctx,bx-52,by-50,bx-32,by-30,bx-12,by-50);_arc2(ctx,bx+12,by-50,bx+32,by-30,bx+52,by-50);_arc2(ctx,bx-56,by+62,bx,by+36,bx+56,by+62);}
+  // Main stat
+  var cy=660,cw=W-160;
+  _roundRect(ctx,80,cy,cw,300,48);ctx.fillStyle=card;ctx.fill();
+  ctx.font='800 96px "DM Serif Display",serif';ctx.fillStyle=green;ctx.textAlign='center';
+  ctx.fillText('$'+Math.round(totalAmt).toLocaleString(),W/2,cy+116);
+  ctx.font='700 36px Nunito,sans-serif';ctx.fillStyle=muted;ctx.fillText('spent this month',W/2,cy+168);
+  ctx.font='800 44px Nunito,sans-serif';ctx.fillStyle=amber;ctx.fillText('= '+totalDays+' days from your goal',W/2,cy+230);
+  // Budget grid
+  var r2y=1100;
+  _roundRect(ctx,80,r2y,430,200,36);ctx.fillStyle=gtint;ctx.fill();
+  ctx.font='800 78px "DM Serif Display",serif';ctx.fillStyle=green;ctx.textAlign='center';ctx.fillText(underDays,80+215,r2y+100);
+  ctx.font='600 28px Nunito,sans-serif';ctx.fillStyle=muted;ctx.fillText('days under',80+215,r2y+146);ctx.fillText('budget',80+215,r2y+178);
+  _roundRect(ctx,W-80-430,r2y,430,200,36);ctx.fillStyle=atint;ctx.fill();
+  ctx.font='800 78px "DM Serif Display",serif';ctx.fillStyle=amber;ctx.fillText(overDays,W-80-215,r2y+100);
+  ctx.font='600 28px Nunito,sans-serif';ctx.fillStyle=muted;ctx.fillText('days over',W-80-215,r2y+146);ctx.fillText('budget',W-80-215,r2y+178);
+  // Top category
+  if(topCat){
+    var catDays=rate>0?Math.round(cats[topCat]/rate*10)/10:0;
+    _roundRect(ctx,80,r2y+240,cw,162,36);ctx.fillStyle=card;ctx.fill();
+    ctx.font='700 34px Nunito,sans-serif';ctx.fillStyle=muted;ctx.textAlign='center';ctx.fillText('most spent on',W/2,r2y+320);
+    ctx.font='800 46px Nunito,sans-serif';ctx.fillStyle=txt2;ctx.fillText(getCatEmoji(topCat)+' '+topCat+' · '+catDays+'d',W/2,r2y+374);
+  }
+  // Streak
+  _roundRect(ctx,80,r2y+450,cw,150,36);ctx.fillStyle=card;ctx.fill();
+  ctx.font='700 34px Nunito,sans-serif';ctx.fillStyle=muted;ctx.textAlign='center';ctx.fillText('current streak',W/2,r2y+534);
+  ctx.font='800 52px "DM Serif Display",serif';ctx.fillStyle=txt2;ctx.fillText(S.streak+' days 🔥',W/2,r2y+594);
+  // Footer
+  ctx.font='800 30px Nunito,sans-serif';ctx.fillStyle=green;ctx.fillText(window.location.hostname,W/2,H-200);
+  ctx.font='600 24px Nunito,sans-serif';ctx.fillStyle=muted;ctx.fillText('track goals in days, not dollars',W/2,H-158);
+  canvas.toBlob(function(blob){
+    if(!blob)return;
+    var file=new File([blob],'lumi-wrapped.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:'My Lumi Month — '+monthStr,text:'My '+monthStr+': $'+Math.round(totalAmt)+' spent = '+totalDays+' days · '+underDays+' days under budget 🌱'}).catch(function(){});
+    }else if(navigator.share){
+      navigator.share({title:'Lumi Wrapped',text:'My '+monthStr+': $'+Math.round(totalAmt)+' = '+totalDays+' days · streak '+S.streak+' 🔥'}).catch(function(){});
+    }else{
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');a.href=url;a.download='lumi-wrapped.png';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url);},3000);
+      toast('wrapped saved! ✨');
+    }
+  },'image/png');
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -2050,6 +2426,7 @@ function loadState(){
     if(!lastDate||lastDate!==today){
       S.todaySpent=0;replenishShield();
       if(saveState())localStorage.setItem('lumi_last_date',today);
+      autoLogRecurring();
       var h=document.getElementById('s-home');
       if(h&&h.classList.contains('active'))renderHome();
     }
