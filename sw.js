@@ -1,5 +1,5 @@
-/* Lumi Service Worker — v4 */
-const CACHE = 'lumi-v4';
+/* Lumi Service Worker — v5 */
+const CACHE = 'lumi-v5';
 
 const PRECACHE = [
   './',
@@ -17,7 +17,7 @@ self.addEventListener('install', event => {
       .then(cache =>
         Promise.allSettled(
           PRECACHE.map(url =>
-            fetch(url + '?v=4').then(res => {
+            fetch(url + '?v=5').then(res => {
               if (res.ok) cache.put(url, res);
             }).catch(() => {})
           )

@@ -19,7 +19,7 @@
 <meta name="twitter:description" content="See every expense in days, not dollars. Build streaks, track pace, hit your goals."/>
 <meta name="twitter:image" content="https://lumi-app-eta.vercel.app/og-image.png"/>
 <title>Lumi — your goals, in days</title>
-<meta name="app-version" content="4"/>
+<meta name="app-version" content="5"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -999,6 +999,7 @@ function ob1Next(){
   S.dailySavings=Math.max(0.1,Math.round(ms/30*100)/100);
   S.monthlyBudget=Math.round(Math.max(0,mi-ms));
   S.dailyBudget=Math.round(S.monthlyBudget/30*10)/10;
+  saveState();
   document.getElementById('ob2-name').textContent=name+'!';
   document.getElementById('ob2-rate').textContent='saving $'+S.dailySavings.toFixed(2)+' / day · budget $'+S.dailyBudget.toFixed(1)+' / day';
   go('ob2');
@@ -1394,7 +1395,7 @@ function triggerCinema(daysGained,goal,prevPct,milestone){
   var numEl=document.getElementById('cinema-num');
   var lblEl=document.getElementById('cinema-days-label');
   if(daysGained>0){
-    numEl.textContent='+0';
+    numEl.textContent='+'+daysGained;
     lblEl.textContent=daysGained===1?'day closer':'days closer';
   }else if(milestone){
     numEl.textContent=milestone+'%';
@@ -2203,7 +2204,7 @@ function autoLogRecurring(){
       logged=true;
     }
   });
-  if(logged)updateDayRecord();
+  if(logged){updateDayRecord();var names=S.recurring.filter(function(r){return r.dayOfMonth===dom;}).map(function(r){return r.name;});toast('auto-logged: '+names.join(', '));}
 }
 function renderRecurringList(){
   var el=document.getElementById('recurring-list');if(!el)return;
