@@ -19,7 +19,7 @@
 <meta name="twitter:description" content="See every expense in days, not dollars. Build streaks, track pace, hit your goals."/>
 <meta name="twitter:image" content="https://lumi-app-eta.vercel.app/og-image.png"/>
 <title>Lumi — your goals, in days</title>
-<meta name="app-version" content="3"/>
+<meta name="app-version" content="4"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -328,17 +328,22 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
     </div>
     <div class="dot-nav" style="margin-bottom:14px;"><span class="on"></span><span></span></div>
     <div class="ds" style="font-size:22px;margin-bottom:4px;line-height:1.25;">first, tell me<br>about you</div>
-    <div style="font-size:13px;color:var(--muted);font-weight:500;margin-bottom:18px;line-height:1.5;">lumi uses this to calculate your daily savings rate and spending budget.</div>
+    <div style="font-size:13px;color:var(--muted);font-weight:500;margin-bottom:18px;line-height:1.5;">lumi uses this to figure out how much you can spend each day.</div>
     <span class="flbl">your name</span>
     <input class="tinp" id="ob-name" type="text" placeholder="Sebastian..." autocomplete="given-name" style="margin-bottom:16px;"/>
-    <span class="flbl">how much do you save per month?</span>
+    <span class="flbl">monthly income <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">after tax</span></span>
+    <div class="mrow" style="margin-bottom:6px;">
+      <span class="msym">$</span>
+      <input class="minp" id="ob-income" type="text" inputmode="decimal" placeholder="3,000" oninput="updateHint()" onkeydown="if(event.key==='Enter')ob1Next()"/>
+    </div>
+    <span class="flbl" style="margin-top:8px;">how much do you want to save per month?</span>
     <div class="mrow" style="margin-bottom:6px;">
       <span class="msym">$</span>
       <input class="minp" id="ob-save" type="text" inputmode="decimal" placeholder="300" oninput="updateHint()" onkeydown="if(event.key==='Enter')ob1Next()"/>
     </div>
-    <div id="daily-hint" style="font-size:11px;color:var(--green);font-weight:700;text-align:center;min-height:18px;margin-bottom:12px;"></div>
+    <div id="daily-hint" style="font-size:11px;color:var(--green);font-weight:700;text-align:center;min-height:32px;margin-bottom:12px;line-height:1.6;"></div>
     <div class="info-box" style="margin-bottom:auto;">
-      <div style="font-size:11px;color:var(--muted);line-height:1.55;">lumi sets your <strong style="color:var(--txt);">spending budget at 2×</strong> your daily savings — real-life breathing room while keeping your goal on track.</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.55;">your <strong style="color:var(--txt);">spending budget = income − savings</strong>. lumi measures every purchase in days — so you always know what something really costs you.</div>
     </div>
     <button class="btn btn-dk" onclick="ob1Next()" style="margin-top:20px;margin-bottom:10px;">next →</button>
     <div style="text-align:center;font-size:11px;color:var(--muted);">no bank connection · stays on your device</div>
@@ -373,6 +378,8 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
     <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="ob-gamt" type="text" inputmode="decimal" placeholder="2,000" oninput="calcPrev()"/></div>
     <span class="flbl">how much have you saved already?</span>
     <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="ob-gsaved" type="text" inputmode="decimal" placeholder="0" oninput="calcPrev()"/></div>
+    <span class="flbl">when do you want it? <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional — adds deadline tracking)</span></span>
+    <input class="tinp" id="ob-gdeadline" type="date" style="margin-bottom:12px;color:var(--txt);" oninput="calcPrev()"/>
     <span class="flbl">monthly contribution <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional — how much/month just for this?)</span></span>
     <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="ob-gcontrib" type="text" inputmode="decimal" placeholder="leave blank to use your savings rate" oninput="calcPrev()"/></div>
     <span class="flbl">why do you want this? <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></span>
@@ -440,6 +447,7 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
         <div style="text-align:right;flex-shrink:0;margin-left:12px;">
           <div class="ds" style="font-size:40px;line-height:1;" id="h-days">–</div>
           <div class="lbl">days away</div>
+          <div style="font-size:10px;color:var(--green);font-weight:700;margin-top:2px;" id="h-completion-date"></div>
         </div>
       </div>
       <div class="pbar"><div class="pfill" id="h-pbar" style="width:0%"></div></div>
@@ -512,7 +520,8 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
       <span class="days-cost-num" id="days-cost-num">0</span>
       <span style="font-size:16px;font-weight:800;color:var(--muted);">days</span>
     </div>
-    <div style="font-size:11px;font-weight:600;color:var(--muted);margin-top:1px;">toward <span id="days-cost-goal">your goal</span></div>
+    <div style="font-size:11px;font-weight:600;color:var(--muted);margin-top:1px;">of saving toward <span id="days-cost-goal">your goal</span></div>
+    <div style="font-size:10px;color:var(--ph);margin-top:3px;" id="days-cost-math"></div>
   </div>
 
   <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
@@ -600,6 +609,7 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
       <div style="flex:1;">
         <div class="ds" style="font-size:36px;line-height:1;" id="gd-days">–</div>
         <div style="font-size:11px;font-weight:600;color:var(--muted);">days away</div>
+        <div style="font-size:10px;color:var(--green);font-weight:700;margin-top:2px;" id="gd-completion-date"></div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:22px;font-weight:800;color:var(--green);" id="gd-pct">–%</div>
@@ -800,12 +810,11 @@ html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;color
       <div class="set-label">your profile</div>
       <span class="flbl" style="margin-top:4px;">name</span>
       <input class="tinp" id="set-name" type="text" placeholder="Your name" style="margin-bottom:12px;"/>
-      <span class="flbl">monthly savings</span>
+      <span class="flbl">monthly income <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">after tax</span></span>
+      <div class="mrow" style="margin-bottom:12px;"><span class="msym">$</span><input class="minp" id="set-income" type="text" inputmode="decimal" placeholder="3,000" oninput="updateSetHint()"/></div>
+      <span class="flbl">monthly savings goal</span>
       <div class="mrow" style="margin-bottom:6px;"><span class="msym">$</span><input class="minp" id="set-save" type="text" inputmode="decimal" placeholder="300" oninput="updateSetHint()"/></div>
-      <div id="set-hint" style="font-size:11px;color:var(--green);font-weight:700;text-align:center;min-height:18px;margin-bottom:12px;"></div>
-      <span class="flbl">monthly spending budget <span style="color:var(--ph);font-size:10px;text-transform:none;letter-spacing:0;">(what you can spend each month)</span></span>
-      <div class="mrow" style="margin-bottom:6px;"><span class="msym">$</span><input class="minp" id="set-budget" type="text" inputmode="decimal" placeholder="auto (2× savings)" oninput="updateSetHint()"/></div>
-      <div id="set-budget-hint" style="font-size:11px;color:var(--muted);font-weight:600;text-align:center;min-height:18px;margin-bottom:16px;"></div>
+      <div id="set-hint" style="font-size:11px;color:var(--green);font-weight:700;text-align:center;min-height:32px;margin-bottom:12px;line-height:1.6;"></div>
       <button class="btn btn-g" onclick="saveSettings()" style="width:100%;">Save changes</button>
     </div>
     <div style="height:1px;background:var(--div);margin:8px 18px 16px;"></div>
@@ -908,6 +917,7 @@ function parseAmt(id){var v=(document.getElementById(id).value||'').replace(/[^0
 var DEFAULT_STATE={
   name:'',goals:[],expenses:[],history:[],
   streak:0,cat:'Food',
+  monthlyIncome:0,
   dailySavings:10,dailyBudget:20,monthlyBudget:0,todaySpent:0,
   lastLogDate:null,shieldsAvailable:1,lastShieldReplenish:null,
   activeGoalIndex:0,onboardingComplete:false,darkMode:false,
@@ -921,7 +931,7 @@ var currentAmt=0, pickedIcon='ico-star', pendingPhoto=null;
 var ICON_MAP={tokyo:'ico-plane',trip:'ico-plane',flight:'ico-plane',vacation:'ico-plane',travel:'ico-plane',iphone:'ico-phone',phone:'ico-phone',mobile:'ico-phone',laptop:'ico-laptop',macbook:'ico-laptop',computer:'ico-laptop',car:'ico-car',auto:'ico-car',emergency:'ico-shield',fund:'ico-shield',home:'ico-home',house:'ico-home',apartment:'ico-home'};
 var BGS=['#EFF5EF','#EEF0FA','#FFF8EE','#FFFBEE','#FEF0E8','#EDF5FF'];
 var BASE_CAT_EMOJI={Food:'🍔',Shopping:'🛍️','Going Out':'🎉',Transport:'🚗',Health:'💊',Coffee:'☕',Rent:'🏠',Entertainment:'🎬',Subscriptions:'📱',Travel:'✈️',Fitness:'💪',Education:'📚',Beauty:'💄',Pets:'🐾',Gifts:'🎁',Savings:'🐷'};
-function getCatEmoji(cat){return BASE_getCatEmoji(cat)||(S.catEmoji&&S.catEmoji[cat])||'💸';}
+function getCatEmoji(cat){return BASE_CAT_EMOJI[cat]||(S.catEmoji&&S.catEmoji[cat])||'💸';}
 
 function getIcon(name){var low=(name||'').toLowerCase();for(var k in ICON_MAP){if(low.indexOf(k)>-1)return ICON_MAP[k];}return'ico-star';}
 function svgIcon(id,size,color){return'<svg width="'+(size||18)+'" height="'+(size||18)+'" viewBox="0 0 24 24" fill="'+(color||'var(--green)')+'"><use href="#'+id+'"/></svg>';}
@@ -963,22 +973,31 @@ function toast(m){
 
 // ─── ONBOARDING 1 ─────────────────────────────────────────────────────────────
 function updateHint(){
+  var mi=parseAmt('ob-income');
   var ms=parseAmt('ob-save');
   var h=document.getElementById('daily-hint');
-  if(ms>0){
-    var d=Math.round(ms/30*100)/100;
-    var eg=d>0?Math.ceil(50/d):0;
-    h.innerHTML='= $'+d.toFixed(2)+'/day saved'+(eg>0?' · <strong>a $50 dinner = '+eg+' days</strong>':'');
+  if(mi>0&&ms>0){
+    var budget=Math.max(0,mi-ms);
+    var ds=Math.round(ms/30*100)/100;
+    var db=Math.round(budget/30*10)/10;
+    h.innerHTML='$'+mi.toFixed(0)+' − $'+ms.toFixed(0)+' = <strong style="color:var(--txt);">$'+budget.toFixed(0)+'/month to spend</strong><br>= $'+ds.toFixed(2)+'/day saved · $'+db.toFixed(2)+'/day budget';
+  }else if(ms>0){
+    var ds2=Math.round(ms/30*100)/100;
+    h.innerHTML='= $'+ds2.toFixed(2)+'/day saved';
   }else{h.textContent='';}
 }
 function ob1Next(){
   var name=document.getElementById('ob-name').value.trim();
+  var mi=parseAmt('ob-income');
   var ms=parseAmt('ob-save');
   if(!name){toast('what\'s your name?');return;}
-  if(!ms||ms<=0){toast('how much do you save per month?');return;}
+  if(!mi||mi<=0){toast('add your monthly income after tax');return;}
+  if(!ms||ms<=0){toast('how much do you want to save per month?');return;}
+  if(ms>=mi){toast('savings can\'t be more than your income!');return;}
   S.name=name;
+  S.monthlyIncome=mi;
   S.dailySavings=Math.max(0.1,Math.round(ms/30*100)/100);
-  if(!S.monthlyBudget||S.monthlyBudget<=0)S.monthlyBudget=Math.round(ms*2);
+  S.monthlyBudget=Math.round(Math.max(0,mi-ms));
   S.dailyBudget=Math.round(S.monthlyBudget/30*10)/10;
   document.getElementById('ob2-name').textContent=name+'!';
   document.getElementById('ob2-rate').textContent='saving $'+S.dailySavings.toFixed(2)+' / day · budget $'+S.dailyBudget.toFixed(1)+' / day';
@@ -1010,12 +1029,13 @@ function ob2Finish(){
   var amt=parseAmt('ob-gamt');var saved=parseAmt('ob-gsaved');
   var contrib=parseAmt('ob-gcontrib');
   var reason=document.getElementById('ob-greason').value.trim();
+  var deadline=document.getElementById('ob-gdeadline').value||null;
   if(!gname){toast('what are you saving for?');return;}
   if(!amt||amt<=0){toast('how much does it cost?');return;}
   if(saved>amt){toast('saved amount can\'t exceed goal amount');return;}
   var icon=pickedIcon||getIcon(gname);
-  S.goals.push({name:gname,amount:amt,saved:Math.min(saved,amt),icon:icon,photo:pendingPhoto,reason:reason,deadline:null,celebrated:[],createdAt:getTodayStr(),monthlyContribution:contrib>0?contrib:null});
-  ['ob-gname','ob-gamt','ob-gsaved','ob-greason','ob-gcontrib'].forEach(function(id){document.getElementById(id).value='';});
+  S.goals.push({name:gname,amount:amt,saved:Math.min(saved,amt),icon:icon,photo:pendingPhoto,reason:reason,deadline:deadline,celebrated:[],createdAt:getTodayStr(),monthlyContribution:contrib>0?contrib:null});
+  ['ob-gname','ob-gamt','ob-gsaved','ob-greason','ob-gcontrib','ob-gdeadline'].forEach(function(id){document.getElementById(id).value='';});
   document.querySelectorAll('#qpick-wrap .qbtn').forEach(function(b){b.classList.remove('picked');});
   document.getElementById('ob-prev').style.display='none';
   pendingPhoto=null;pickedIcon='ico-star';
@@ -1066,6 +1086,14 @@ function daysToDeadline(g){
   var today=new Date();today.setHours(12,0,0,0);
   return Math.ceil((dl-today)/86400000);
 }
+var MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function goalCompletionDate(g){
+  var da=daysAway(g);
+  if(da==='∞'||da===0)return null;
+  var d=new Date();
+  d.setDate(d.getDate()+da);
+  return MONTH_NAMES[d.getMonth()]+' '+d.getFullYear();
+}
 function trackBadgeHtml(g){
   var dtd=daysToDeadline(g);
   if(dtd===null)return'';
@@ -1104,7 +1132,13 @@ function renderHome(){
 
   var g=S.goals[0],p=pct(g);
   document.getElementById('h-gname').textContent=g.name;
-  document.getElementById('h-days').textContent=daysAway(g);
+  var da=daysAway(g);
+  document.getElementById('h-days').textContent=da;
+  var cdEl=document.getElementById('h-completion-date');
+  if(cdEl){
+    var cd=da===0?'🎉 goal reached!':goalCompletionDate(g);
+    cdEl.textContent=cd?'by '+cd:'';
+  }
   document.getElementById('h-slbl').textContent='$'+Math.round(g.saved)+' saved';
   document.getElementById('h-glbl').textContent='$'+Math.round(g.amount)+' goal';
   document.getElementById('h-pbar').style.width=p+'%';
@@ -1160,7 +1194,7 @@ function renderHome(){
         '<div style="font-size:11px;color:var(--muted);margin-top:2px;">$'+Math.round(goal.saved)+' of $'+Math.round(goal.amount)+'</div>'+
         '<div class="pbar-sm"><div class="pfill" style="width:'+pct(goal)+'%;"></div></div>'+
       '</div>'+
-      '<div style="font-size:12px;font-weight:700;color:var(--green);flex-shrink:0;">'+(function(da){return da==='∞'?'∞':da+'d';})(daysAway(goal))+'</div>';
+      '<div style="text-align:right;flex-shrink:0;">'+(function(da,goal2){var cd=da===0?'✓':goalCompletionDate(goal2);return'<div style="font-size:12px;font-weight:700;color:var(--green);">'+(da==='∞'?'∞':da+'d')+'</div>'+(cd&&da!==0&&da!=='∞'?'<div style="font-size:9px;color:var(--muted);font-weight:600;">by '+cd+'</div>':'');})(daysAway(goal),goal)+'</div>';
     list.appendChild(row);
   });
 }
@@ -1237,6 +1271,8 @@ function react(amt){
       dcNum.textContent=d;
       dcNum.style.color=d<=2?'var(--green)':d<=7?'var(--amber)':'var(--amber-dark)';
       if(dcGoal)dcGoal.textContent=S.goals.length?S.goals[0].name:'your goal';
+      var mathEl=document.getElementById('days-cost-math');
+      if(mathEl){var rate2=goalDailySavings(S.goals[0]||{});mathEl.textContent=rate2>0?'$'+amt.toFixed(0)+' ÷ $'+rate2.toFixed(2)+'/day':'';}
     }else{dcWrap.style.display='none';}
   }
 
@@ -1523,7 +1559,13 @@ function renderGoalDetail(){
   icoWrap.innerHTML=svgIcon(g.icon||getIcon(g.name),24,'var(--green)');
   icoWrap.style.background=BGS[S.activeGoalIndex%BGS.length];
 
-  document.getElementById('gd-days').textContent=daysAway(g);
+  var gdDa=daysAway(g);
+  document.getElementById('gd-days').textContent=gdDa;
+  var gdCdEl=document.getElementById('gd-completion-date');
+  if(gdCdEl){
+    var gdCd=gdDa===0?'🎉 goal reached!':goalCompletionDate(g);
+    gdCdEl.textContent=gdCd?'by '+gdCd:'';
+  }
   document.getElementById('gd-pct').textContent=pct(g)+'%';
   document.getElementById('gd-pbar').style.width=pct(g)+'%';
   document.getElementById('gd-saved-lbl').textContent='$'+Math.round(g.saved)+' saved';
@@ -2017,31 +2059,43 @@ function _wrapText(ctx,text,maxW,maxLines){
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
 function renderSettings(){
   document.getElementById('set-name').value=S.name||'';
+  document.getElementById('set-income').value=S.monthlyIncome>0?S.monthlyIncome:'';
   var monthly=Math.round(S.dailySavings*30*100)/100;
   document.getElementById('set-save').value=monthly||'';
-  document.getElementById('set-budget').value=S.monthlyBudget>0?S.monthlyBudget:'';
   document.getElementById('dark-toggle').checked=S.darkMode||false;
   updateSetHint();
   renderCategoryList();
   renderRecurringList();
 }
 function updateSetHint(){
+  var mi=parseFloat((document.getElementById('set-income').value||'').replace(/[^0-9.]/g,''))||0;
   var ms=parseFloat((document.getElementById('set-save').value||'').replace(/[^0-9.]/g,''))||0;
-  var mb=parseFloat((document.getElementById('set-budget').value||'').replace(/[^0-9.]/g,''))||0;
-  var ds=ms>0?Math.round(ms/30*100)/100:0;
-  var db=mb>0?Math.round(mb/30*10)/10:(ds>0?Math.round(ds*2*10)/10:0);
-  document.getElementById('set-hint').textContent=ds>0?'= $'+ds.toFixed(2)+'/day saved':'';
-  document.getElementById('set-budget-hint').textContent=db>0?'= $'+db.toFixed(1)+'/day spending'+(mb<=0?' (auto)':''):'';
+  var h=document.getElementById('set-hint');
+  if(mi>0&&ms>0){
+    var budget=Math.max(0,mi-ms);
+    var ds=Math.round(ms/30*100)/100;
+    var db=Math.round(budget/30*10)/10;
+    h.innerHTML='$'+mi.toFixed(0)+' − $'+ms.toFixed(0)+' = <strong style="color:var(--txt);">$'+budget.toFixed(0)+'/month to spend</strong><br>= $'+ds.toFixed(2)+'/day saved · $'+db.toFixed(2)+'/day budget';
+  }else if(ms>0){
+    var ds2=Math.round(ms/30*100)/100;
+    h.textContent='= $'+ds2.toFixed(2)+'/day saved';
+  }else{h.textContent='';}
 }
 function saveSettings(){
   var name=document.getElementById('set-name').value.trim();
+  var mi=parseAmt('set-income');
   var ms=parseAmt('set-save');
-  var mb=parseAmt('set-budget');
   if(!name){toast('add your name!');return;}
-  if(!ms||ms<=0){toast('add your monthly savings!');return;}
+  if(!ms||ms<=0){toast('add your monthly savings goal!');return;}
   S.name=name;
+  if(mi>0){
+    S.monthlyIncome=mi;
+    if(ms>=mi){toast('savings can\'t exceed income!');return;}
+    S.monthlyBudget=Math.round(Math.max(0,mi-ms));
+  }else{
+    S.monthlyBudget=Math.round(ms*2);
+  }
   S.dailySavings=Math.max(0.1,Math.round(ms/30*100)/100);
-  S.monthlyBudget=mb>0?mb:Math.round(ms*2);
   S.dailyBudget=Math.round(S.monthlyBudget/30*10)/10;
   saveState();toast('saved ✓');go('home');
 }
@@ -2062,6 +2116,7 @@ function confirmReset(){
     S=JSON.parse(JSON.stringify(DEFAULT_STATE));
     pendingPhoto=null;pickedIcon='ico-star';currentAmt=0;
     document.getElementById('ob-name').value='';
+    document.getElementById('ob-income').value='';
     document.getElementById('ob-save').value='';
     document.getElementById('daily-hint').textContent='';
     applyDark(false);go('ob1');toast('data reset');
@@ -2087,7 +2142,11 @@ function loadState(){
     if(!Array.isArray(S.expenses))S.expenses=[];
     if(!Array.isArray(S.history))S.history=[];
     if(typeof S.dailySavings!=='number'||S.dailySavings<=0)S.dailySavings=10;
-    if(typeof S.monthlyBudget!=='number'||S.monthlyBudget<=0)S.monthlyBudget=Math.round(S.dailySavings*30*2);
+    if(typeof S.monthlyIncome!=='number')S.monthlyIncome=0;
+    if(typeof S.monthlyBudget!=='number'||S.monthlyBudget<=0){
+      // Migrate: if income known, use income-savings; else fall back to old 2x formula
+      S.monthlyBudget=S.monthlyIncome>0?Math.round(Math.max(0,S.monthlyIncome-S.dailySavings*30)):Math.round(S.dailySavings*30*2);
+    }
     S.dailyBudget=Math.round(S.monthlyBudget/30*10)/10;
     if(typeof S.streak!=='number')S.streak=0;
     if(typeof S.shieldsAvailable!=='number')S.shieldsAvailable=1;
